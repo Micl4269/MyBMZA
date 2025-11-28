@@ -46,6 +46,14 @@ export function Footer() {
             <ul className="space-y-2 text-sm">
               <li>
                 <Link
+                  href="/supplier-products"
+                  className="text-gray-400 hover:text-white transition-colors"
+                >
+                  All Products
+                </Link>
+              </li>
+              <li>
+                <Link
                   href="/category/exterior"
                   className="text-gray-400 hover:text-white transition-colors"
                 >
@@ -68,14 +76,6 @@ export function Footer() {
                   Curated Kits
                 </Link>
               </li>
-              <li>
-                <Link
-                  href="/new-arrivals"
-                  className="text-gray-400 hover:text-white transition-colors"
-                >
-                  New Arrivals
-                </Link>
-              </li>
             </ul>
           </div>
 
@@ -83,6 +83,14 @@ export function Footer() {
           <div>
             <h4 className="font-semibold mb-4">Support</h4>
             <ul className="space-y-2 text-sm">
+              <li>
+                <Link
+                  href="/about"
+                  className="text-gray-400 hover:text-white transition-colors"
+                >
+                  About Us
+                </Link>
+              </li>
               <li>
                 <Link
                   href="/shipping"
@@ -97,14 +105,6 @@ export function Footer() {
                   className="text-gray-400 hover:text-white transition-colors"
                 >
                   Returns & Exchanges
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/faq"
-                  className="text-gray-400 hover:text-white transition-colors"
-                >
-                  FAQ
                 </Link>
               </li>
               <li>

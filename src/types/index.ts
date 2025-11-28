@@ -100,16 +100,8 @@ export interface ProductFitment {
   notes?: string;
 }
 
-// Cart Types
-export interface CartItem {
-  productId: string;
-  product: Product;
-  quantity: number;
-  selectedVehicle?: SavedVehicle;
-}
-
+// Cart Types - CartItem is defined in store/cart-store.ts
 export interface Cart {
-  items: CartItem[];
   subtotal: number;
   shipping: number;
   total: number;
@@ -197,6 +189,31 @@ export interface Customer {
   addresses: ShippingAddress[];
   savedVehicles: SavedVehicle[];
   createdAt: string;
+}
+
+// Supplier Product Types (from scraped inventory)
+export interface SupplierProduct {
+  id: string;
+  source: "autostyle" | "carbon-sport";
+  source_id: string;
+  source_url: string;
+  name: string;
+  description?: string;
+  short_description?: string;
+  price: number;
+  regular_price?: number;
+  in_stock: boolean;
+  stock_status?: string;
+  stock_quantity?: number;
+  primary_category?: string;
+  categories?: string[];
+  images?: string[];
+  hosted_images?: string[];
+  compatibility_text?: string;
+  compatibility_models?: string[];
+  scraped_at: string;
+  created_at: string;
+  updated_at: string;
 }
 
 // Admin Types

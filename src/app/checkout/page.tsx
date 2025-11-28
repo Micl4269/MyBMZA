@@ -101,17 +101,88 @@ export default function CheckoutPage() {
 
     setIsProcessing(true);
 
-    // Simulate payment processing
-    // In production, this would redirect to PayFast or Yoco
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    try {
+      // Prepare order items
+      const orderItems = items.map((item) => ({
+        productId: item.productId,
+        productType: item.productType,
+        name: item.name,
+        price: item.price,
+        quantity: item.quantity,
+        total: item.price * item.quantity,
+        image: item.image,
+      }));
 
-    // For demo, just show success
-    alert(
-      `Payment would be processed via ${paymentMethod === "payfast" ? "PayFast" : "Yoco"}\nTotal: ${formatPrice(total)}`
-    );
+      // Create order and get payment URL
+      const response = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          phone,
+          firstName,
+          lastName,
+          items: orderItems,
+          subtotal,
+          shipping: shippingCost,
+          total,
+          shippingAddress: {
+            firstName,
+            lastName,
+            address1,
+            address2,
+            city,
+            province,
+            postalCode,
+            country: "ZA",
+          },
+          shippingMethod: expressShipping ? "express" : "standard",
+          paymentMethod,
+        }),
+      });
 
-    clearCart();
-    router.push("/");
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to create order");
+      }
+
+      // Clear cart before redirect
+      clearCart();
+
+      // Handle PayFast - form submit redirect
+      if (paymentMethod === "payfast" && data.payment.data) {
+        // Create a form and submit it to PayFast
+        const form = document.createElement("form");
+        form.method = "POST";
+        form.action = data.payment.url;
+
+        Object.entries(data.payment.data).forEach(([key, value]) => {
+          const input = document.createElement("input");
+          input.type = "hidden";
+          input.name = key;
+          input.value = value as string;
+          form.appendChild(input);
+        });
+
+        document.body.appendChild(form);
+        form.submit();
+        return;
+      }
+
+      // Handle Yoco - direct redirect
+      if (paymentMethod === "yoco" && data.payment.url) {
+        window.location.href = data.payment.url;
+        return;
+      }
+
+      // Fallback - go to success page
+      router.push(`/checkout/success?order=${data.order.orderNumber}`);
+    } catch (error) {
+      console.error("Checkout error:", error);
+      alert("Failed to process checkout. Please try again.");
+      setIsProcessing(false);
+    }
   };
 
   if (items.length === 0) {
@@ -497,12 +568,13 @@ export default function CheckoutPage() {
                 {items.map((item) => (
                   <div key={item.productId} className="flex gap-3">
                     <div className="w-16 h-16 bg-secondary rounded-lg overflow-hidden flex-shrink-0 relative">
-                      {item.product.images[0] ? (
+                      {item.image ? (
                         <Image
-                          src={item.product.images[0].url}
-                          alt={item.product.name}
+                          src={item.image}
+                          alt={item.name}
                           fill
                           className="object-cover"
+                          unoptimized={!item.image.includes("supabase")}
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center">
@@ -515,14 +587,16 @@ export default function CheckoutPage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium line-clamp-1">
-                        {item.product.name}
+                        {item.name.replace(/&#\d+;/g, "")}
                       </p>
-                      <p className="text-xs text-muted-foreground">
-                        {item.product.sku}
-                      </p>
+                      {item.product?.sku && (
+                        <p className="text-xs text-muted-foreground">
+                          {item.product.sku}
+                        </p>
+                      )}
                     </div>
                     <span className="text-sm font-medium">
-                      {formatPrice(item.product.price * item.quantity)}
+                      {formatPrice(item.price * item.quantity)}
                     </span>
                   </div>
                 ))}

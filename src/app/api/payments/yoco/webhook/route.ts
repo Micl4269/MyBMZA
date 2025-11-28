@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server";
 import crypto from "crypto";
 
 export async function POST(request: NextRequest) {
@@ -20,29 +21,75 @@ export async function POST(request: NextRequest) {
     }
 
     const event = JSON.parse(body);
+    const supabase = await createClient();
 
     switch (event.type) {
-      case "checkout.complete":
-        const { metadata, amount } = event.payload;
-        const orderId = metadata?.orderId;
+      case "checkout.complete": {
+        const { metadata, id: checkoutId } = event.payload;
+        const orderNumber = metadata?.orderNumber;
 
-        if (orderId) {
-          // TODO: Update order status in Supabase
-          // const { error } = await supabase
-          //   .from('orders')
-          //   .update({
-          //     payment_status: 'paid',
-          //     status: 'confirmed'
-          //   })
-          //   .eq('id', orderId);
+        if (orderNumber) {
+          // Get the order
+          const { data: order } = await supabase
+            .from("orders")
+            .select("id")
+            .eq("order_number", orderNumber)
+            .single();
 
-          console.log(`Yoco payment complete for order ${orderId}: R${amount / 100}`);
+          if (order) {
+            // Update order status
+            await supabase
+              .from("orders")
+              .update({
+                payment_status: "paid",
+                status: "confirmed",
+                payment_id: checkoutId,
+              })
+              .eq("id", order.id);
+
+            // Add to status history
+            await supabase.from("order_status_history").insert({
+              order_id: order.id,
+              status: "confirmed",
+              notes: `Payment received via Yoco (${checkoutId})`,
+            });
+
+            console.log(`Yoco payment complete for order ${orderNumber}`);
+          }
         }
         break;
+      }
 
-      case "checkout.failed":
-        console.log("Yoco payment failed:", event.payload);
+      case "checkout.failed": {
+        const { metadata, id: checkoutId } = event.payload;
+        const orderNumber = metadata?.orderNumber;
+
+        if (orderNumber) {
+          const { data: order } = await supabase
+            .from("orders")
+            .select("id")
+            .eq("order_number", orderNumber)
+            .single();
+
+          if (order) {
+            await supabase
+              .from("orders")
+              .update({
+                payment_status: "failed",
+              })
+              .eq("id", order.id);
+
+            await supabase.from("order_status_history").insert({
+              order_id: order.id,
+              status: "pending",
+              notes: `Payment failed via Yoco (${checkoutId})`,
+            });
+
+            console.log(`Yoco payment failed for order ${orderNumber}`);
+          }
+        }
         break;
+      }
 
       default:
         console.log("Unhandled Yoco event:", event.type);

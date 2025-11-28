@@ -1,12 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { createBrowserClient } from "@supabase/ssr";
+import { User } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { MStripe } from "@/components/ui/m-stripe";
-import { products } from "@/data/products";
 import { formatPrice } from "@/lib/utils";
 import {
   LayoutDashboard,
@@ -16,118 +18,205 @@ import {
   Settings,
   LogOut,
   Search,
-  Plus,
-  Edit,
-  Trash2,
   Eye,
   TrendingUp,
   DollarSign,
   ShoppingBag,
   AlertCircle,
+  Loader2,
+  RefreshCw,
+  CheckCircle,
+  Clock,
+  Truck,
+  XCircle,
 } from "lucide-react";
 
-type AdminTab = "dashboard" | "products" | "orders" | "customers" | "settings";
+type AdminTab = "dashboard" | "orders" | "customers" | "settings";
 
-// Mock data for orders
-const mockOrders = [
-  {
-    id: "ORD-001",
-    customer: "John Smith",
-    email: "john@example.com",
-    total: 4599,
-    status: "pending",
-    date: "2024-03-15",
-  },
-  {
-    id: "ORD-002",
-    customer: "Sarah Johnson",
-    email: "sarah@example.com",
-    total: 2499,
-    status: "shipped",
-    date: "2024-03-14",
-  },
-  {
-    id: "ORD-003",
-    customer: "Mike Davis",
-    email: "mike@example.com",
-    total: 1999,
-    status: "delivered",
-    date: "2024-03-13",
-  },
-];
+interface Order {
+  id: string;
+  order_number: string;
+  email: string;
+  phone?: string;
+  status: string;
+  payment_status: string;
+  items: Array<{
+    productId: string;
+    name: string;
+    price: number;
+    quantity: number;
+    total: number;
+  }>;
+  subtotal: number;
+  shipping: number;
+  total: number;
+  shipping_address: {
+    firstName: string;
+    lastName: string;
+    address1: string;
+    city: string;
+    province: string;
+  };
+  created_at: string;
+}
+
+interface Customer {
+  id: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+  phone?: string;
+  created_at: string;
+}
+
+const ADMIN_EMAILS = ["admin@mybmza.co.za", "mic@mybmza.co.za"]; // Add your admin emails here
+
+const statusConfig: Record<string, { icon: React.ReactNode; variant: "warning" | "m-blue" | "success" | "error" }> = {
+  pending: { icon: <Clock className="h-3 w-3" />, variant: "warning" },
+  confirmed: { icon: <CheckCircle className="h-3 w-3" />, variant: "m-blue" },
+  processing: { icon: <Package className="h-3 w-3" />, variant: "m-blue" },
+  shipped: { icon: <Truck className="h-3 w-3" />, variant: "m-blue" },
+  delivered: { icon: <CheckCircle className="h-3 w-3" />, variant: "success" },
+  cancelled: { icon: <XCircle className="h-3 w-3" />, variant: "error" },
+};
 
 export default function AdminPage() {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<AdminTab>("dashboard");
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [password, setPassword] = useState("");
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [ordersLoading, setOrdersLoading] = useState(false);
+  const [customersLoading, setCustomersLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
-  // Simple password protection (in production, use proper auth)
-  const handleLogin = () => {
-    if (password === "mybmza2024") {
-      setIsAuthenticated(true);
-    } else {
-      alert("Incorrect password");
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+
+  useEffect(() => {
+    async function checkAuth() {
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (!user) {
+        router.push("/login?redirect=/admin");
+        return;
+      }
+
+      // Check if user is admin
+      if (!ADMIN_EMAILS.includes(user.email || "")) {
+        router.push("/");
+        return;
+      }
+
+      setUser(user);
+      setLoading(false);
+      fetchOrders();
+      fetchCustomers();
     }
-  };
 
-  if (!isAuthenticated) {
+    checkAuth();
+  }, [router, supabase.auth]);
+
+  async function fetchOrders() {
+    setOrdersLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("orders")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(100);
+
+      if (error) throw error;
+      setOrders(data || []);
+    } catch (error) {
+      console.error("Failed to fetch orders:", error);
+    } finally {
+      setOrdersLoading(false);
+    }
+  }
+
+  async function fetchCustomers() {
+    setCustomersLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("customers")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(100);
+
+      if (error) throw error;
+      setCustomers(data || []);
+    } catch (error) {
+      console.error("Failed to fetch customers:", error);
+    } finally {
+      setCustomersLoading(false);
+    }
+  }
+
+  async function updateOrderStatus(orderId: string, newStatus: string) {
+    try {
+      const { error } = await supabase
+        .from("orders")
+        .update({ status: newStatus, updated_at: new Date().toISOString() })
+        .eq("id", orderId);
+
+      if (error) throw error;
+
+      // Add to status history
+      await supabase.from("order_status_history").insert({
+        order_id: orderId,
+        status: newStatus,
+        notes: `Status updated to ${newStatus} by admin`,
+      });
+
+      fetchOrders();
+      setSelectedOrder(null);
+    } catch (error) {
+      console.error("Failed to update order:", error);
+    }
+  }
+
+  async function handleSignOut() {
+    await supabase.auth.signOut();
+    router.push("/");
+  }
+
+  if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-secondary/30">
-        <div className="bg-card border border-border rounded-xl p-8 w-full max-w-md">
-          <div className="text-center mb-6">
-            <div className="flex items-center justify-center gap-1 mb-4">
-              <span className="text-2xl font-bold">My</span>
-              <span className="text-2xl font-bold text-m-blue">BM</span>
-              <span className="text-2xl font-bold">ZA</span>
-            </div>
-            <MStripe size="sm" className="mb-4" />
-            <h1 className="text-xl font-bold">Admin Dashboard</h1>
-            <p className="text-sm text-muted-foreground">
-              Enter password to access
-            </p>
-          </div>
-
-          <div className="space-y-4">
-            <Input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              onKeyPress={(e) => e.key === "Enter" && handleLogin()}
-            />
-            <Button onClick={handleLogin} className="w-full">
-              Login
-            </Button>
-          </div>
-
-          <p className="text-xs text-muted-foreground text-center mt-4">
-            Demo password: mybmza2024
-          </p>
-        </div>
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-m-blue" />
       </div>
     );
   }
 
   const navItems = [
     { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { id: "products", label: "Products", icon: Package },
     { id: "orders", label: "Orders", icon: ShoppingCart },
     { id: "customers", label: "Customers", icon: Users },
     { id: "settings", label: "Settings", icon: Settings },
   ];
 
-  const filteredProducts = products.filter(
-    (p) =>
-      p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.sku.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredOrders = orders.filter(
+    (o) =>
+      o.order_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      o.email.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const filteredCustomers = customers.filter(
+    (c) =>
+      c.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      `${c.first_name} ${c.last_name}`.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const stats = {
-    totalRevenue: 125000,
-    totalOrders: 48,
-    totalProducts: products.length,
-    lowStock: products.filter((p) => p.stockQuantity < 10).length,
+    totalRevenue: orders.filter(o => o.payment_status === "paid").reduce((sum, o) => sum + o.total, 0),
+    totalOrders: orders.length,
+    pendingOrders: orders.filter(o => o.status === "pending").length,
+    totalCustomers: customers.length,
   };
 
   return (
@@ -164,8 +253,9 @@ export default function AdminPage() {
         </nav>
 
         <div className="p-4 border-t border-border">
+          <p className="text-xs text-muted-foreground mb-2 truncate">{user?.email}</p>
           <button
-            onClick={() => setIsAuthenticated(false)}
+            onClick={handleSignOut}
             className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:bg-secondary transition-colors"
           >
             <LogOut className="h-4 w-4" />
@@ -200,9 +290,8 @@ export default function AdminPage() {
                       <DollarSign className="h-6 w-6 text-emerald-500" />
                     </div>
                   </div>
-                  <p className="text-xs text-emerald-500 mt-2 flex items-center gap-1">
-                    <TrendingUp className="h-3 w-3" />
-                    +12% from last month
+                  <p className="text-xs text-muted-foreground mt-2">
+                    From paid orders
                   </p>
                 </div>
 
@@ -218,200 +307,121 @@ export default function AdminPage() {
                       <ShoppingBag className="h-6 w-6 text-m-blue" />
                     </div>
                   </div>
-                  <p className="text-xs text-m-blue mt-2">This month</p>
+                  <p className="text-xs text-m-blue mt-2">All time</p>
                 </div>
 
                 <div className="bg-card border border-border rounded-xl p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-muted-foreground">Products</p>
-                      <p className="text-2xl font-bold">{stats.totalProducts}</p>
-                    </div>
-                    <div className="w-12 h-12 rounded-full bg-purple-500/10 flex items-center justify-center">
-                      <Package className="h-6 w-6 text-purple-500" />
-                    </div>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    Active listings
-                  </p>
-                </div>
-
-                <div className="bg-card border border-border rounded-xl p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Low Stock</p>
-                      <p className="text-2xl font-bold">{stats.lowStock}</p>
+                      <p className="text-sm text-muted-foreground">Pending</p>
+                      <p className="text-2xl font-bold">{stats.pendingOrders}</p>
                     </div>
                     <div className="w-12 h-12 rounded-full bg-amber-500/10 flex items-center justify-center">
                       <AlertCircle className="h-6 w-6 text-amber-500" />
                     </div>
                   </div>
                   <p className="text-xs text-amber-500 mt-2">
-                    Items below 10 units
+                    Needs attention
+                  </p>
+                </div>
+
+                <div className="bg-card border border-border rounded-xl p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Customers</p>
+                      <p className="text-2xl font-bold">{stats.totalCustomers}</p>
+                    </div>
+                    <div className="w-12 h-12 rounded-full bg-purple-500/10 flex items-center justify-center">
+                      <Users className="h-6 w-6 text-purple-500" />
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Registered
                   </p>
                 </div>
               </div>
 
               {/* Recent Orders */}
               <div className="bg-card border border-border rounded-xl">
-                <div className="p-4 border-b border-border">
+                <div className="p-4 border-b border-border flex items-center justify-between">
                   <h2 className="font-semibold">Recent Orders</h2>
+                  <button
+                    onClick={fetchOrders}
+                    className="p-2 hover:bg-secondary rounded-lg"
+                  >
+                    <RefreshCw className={`h-4 w-4 ${ordersLoading ? "animate-spin" : ""}`} />
+                  </button>
                 </div>
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b border-border">
-                        <th className="text-left p-4 text-sm font-medium text-muted-foreground">
-                          Order ID
-                        </th>
-                        <th className="text-left p-4 text-sm font-medium text-muted-foreground">
-                          Customer
-                        </th>
-                        <th className="text-left p-4 text-sm font-medium text-muted-foreground">
-                          Total
-                        </th>
-                        <th className="text-left p-4 text-sm font-medium text-muted-foreground">
-                          Status
-                        </th>
-                        <th className="text-left p-4 text-sm font-medium text-muted-foreground">
-                          Date
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {mockOrders.map((order) => (
-                        <tr key={order.id} className="border-b border-border">
-                          <td className="p-4 font-mono text-sm">{order.id}</td>
-                          <td className="p-4">
-                            <p className="font-medium text-sm">
-                              {order.customer}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              {order.email}
-                            </p>
-                          </td>
-                          <td className="p-4 font-medium">
-                            {formatPrice(order.total)}
-                          </td>
-                          <td className="p-4">
-                            <Badge
-                              variant={
-                                order.status === "delivered"
-                                  ? "success"
-                                  : order.status === "shipped"
-                                  ? "m-blue"
-                                  : "warning"
-                              }
-                            >
-                              {order.status}
-                            </Badge>
-                          </td>
-                          <td className="p-4 text-sm text-muted-foreground">
-                            {order.date}
-                          </td>
+                {ordersLoading ? (
+                  <div className="p-8 text-center">
+                    <Loader2 className="h-8 w-8 animate-spin text-m-blue mx-auto" />
+                  </div>
+                ) : orders.length === 0 ? (
+                  <div className="p-8 text-center text-muted-foreground">
+                    No orders yet
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b border-border">
+                          <th className="text-left p-4 text-sm font-medium text-muted-foreground">
+                            Order
+                          </th>
+                          <th className="text-left p-4 text-sm font-medium text-muted-foreground">
+                            Customer
+                          </th>
+                          <th className="text-left p-4 text-sm font-medium text-muted-foreground">
+                            Total
+                          </th>
+                          <th className="text-left p-4 text-sm font-medium text-muted-foreground">
+                            Status
+                          </th>
+                          <th className="text-left p-4 text-sm font-medium text-muted-foreground">
+                            Payment
+                          </th>
+                          <th className="text-left p-4 text-sm font-medium text-muted-foreground">
+                            Date
+                          </th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Products Tab */}
-          {activeTab === "products" && (
-            <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <h1 className="text-2xl font-bold">Products</h1>
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Product
-                </Button>
-              </div>
-
-              {/* Search */}
-              <div className="relative max-w-md">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search products..."
-                  className="pl-10"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-
-              {/* Products Table */}
-              <div className="bg-card border border-border rounded-xl overflow-hidden">
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b border-border bg-secondary/50">
-                        <th className="text-left p-4 text-sm font-medium text-muted-foreground">
-                          Product
-                        </th>
-                        <th className="text-left p-4 text-sm font-medium text-muted-foreground">
-                          SKU
-                        </th>
-                        <th className="text-left p-4 text-sm font-medium text-muted-foreground">
-                          Category
-                        </th>
-                        <th className="text-left p-4 text-sm font-medium text-muted-foreground">
-                          Price
-                        </th>
-                        <th className="text-left p-4 text-sm font-medium text-muted-foreground">
-                          Stock
-                        </th>
-                        <th className="text-left p-4 text-sm font-medium text-muted-foreground">
-                          Actions
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredProducts.map((product) => (
-                        <tr key={product.id} className="border-b border-border">
-                          <td className="p-4">
-                            <p className="font-medium text-sm line-clamp-1">
-                              {product.name}
-                            </p>
-                          </td>
-                          <td className="p-4 font-mono text-xs">
-                            {product.sku}
-                          </td>
-                          <td className="p-4">
-                            <Badge variant="secondary">{product.category}</Badge>
-                          </td>
-                          <td className="p-4 font-medium">
-                            {formatPrice(product.price)}
-                          </td>
-                          <td className="p-4">
-                            <span
-                              className={`font-medium ${
-                                product.stockQuantity < 10
-                                  ? "text-amber-500"
-                                  : "text-emerald-500"
-                              }`}
-                            >
-                              {product.stockQuantity}
-                            </span>
-                          </td>
-                          <td className="p-4">
-                            <div className="flex items-center gap-2">
-                              <button className="p-1.5 hover:bg-secondary rounded transition-colors">
-                                <Eye className="h-4 w-4 text-muted-foreground" />
-                              </button>
-                              <button className="p-1.5 hover:bg-secondary rounded transition-colors">
-                                <Edit className="h-4 w-4 text-muted-foreground" />
-                              </button>
-                              <button className="p-1.5 hover:bg-secondary rounded transition-colors">
-                                <Trash2 className="h-4 w-4 text-m-red" />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                      </thead>
+                      <tbody>
+                        {orders.slice(0, 10).map((order) => {
+                          const config = statusConfig[order.status] || statusConfig.pending;
+                          return (
+                            <tr key={order.id} className="border-b border-border hover:bg-secondary/50">
+                              <td className="p-4 font-mono text-sm">{order.order_number}</td>
+                              <td className="p-4">
+                                <p className="font-medium text-sm">
+                                  {order.shipping_address.firstName} {order.shipping_address.lastName}
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                  {order.email}
+                                </p>
+                              </td>
+                              <td className="p-4 font-medium">
+                                {formatPrice(order.total)}
+                              </td>
+                              <td className="p-4">
+                                <Badge variant={config.variant}>
+                                  {order.status}
+                                </Badge>
+                              </td>
+                              <td className="p-4">
+                                <Badge variant={order.payment_status === "paid" ? "success" : "warning"}>
+                                  {order.payment_status}
+                                </Badge>
+                              </td>
+                              <td className="p-4 text-sm text-muted-foreground">
+                                {new Date(order.created_at).toLocaleDateString("en-ZA")}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -419,12 +429,117 @@ export default function AdminPage() {
           {/* Orders Tab */}
           {activeTab === "orders" && (
             <div className="space-y-6">
-              <h1 className="text-2xl font-bold">Orders</h1>
-              <div className="bg-card border border-border rounded-xl p-8 text-center">
-                <ShoppingCart className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground">
-                  Order management will be connected to Supabase database
-                </p>
+              <div className="flex items-center justify-between">
+                <h1 className="text-2xl font-bold">Orders</h1>
+                <button
+                  onClick={fetchOrders}
+                  className="p-2 hover:bg-secondary rounded-lg"
+                >
+                  <RefreshCw className={`h-4 w-4 ${ordersLoading ? "animate-spin" : ""}`} />
+                </button>
+              </div>
+
+              {/* Search */}
+              <div className="relative max-w-md">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search by order # or email..."
+                  className="pl-10"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+
+              {/* Orders Table */}
+              <div className="bg-card border border-border rounded-xl overflow-hidden">
+                {ordersLoading ? (
+                  <div className="p-8 text-center">
+                    <Loader2 className="h-8 w-8 animate-spin text-m-blue mx-auto" />
+                  </div>
+                ) : filteredOrders.length === 0 ? (
+                  <div className="p-8 text-center text-muted-foreground">
+                    No orders found
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b border-border bg-secondary/50">
+                          <th className="text-left p-4 text-sm font-medium text-muted-foreground">
+                            Order
+                          </th>
+                          <th className="text-left p-4 text-sm font-medium text-muted-foreground">
+                            Customer
+                          </th>
+                          <th className="text-left p-4 text-sm font-medium text-muted-foreground">
+                            Items
+                          </th>
+                          <th className="text-left p-4 text-sm font-medium text-muted-foreground">
+                            Total
+                          </th>
+                          <th className="text-left p-4 text-sm font-medium text-muted-foreground">
+                            Status
+                          </th>
+                          <th className="text-left p-4 text-sm font-medium text-muted-foreground">
+                            Payment
+                          </th>
+                          <th className="text-left p-4 text-sm font-medium text-muted-foreground">
+                            Date
+                          </th>
+                          <th className="text-left p-4 text-sm font-medium text-muted-foreground">
+                            Actions
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredOrders.map((order) => {
+                          const config = statusConfig[order.status] || statusConfig.pending;
+                          return (
+                            <tr key={order.id} className="border-b border-border">
+                              <td className="p-4">
+                                <p className="font-mono text-sm">{order.order_number}</p>
+                              </td>
+                              <td className="p-4">
+                                <p className="font-medium text-sm">
+                                  {order.shipping_address.firstName} {order.shipping_address.lastName}
+                                </p>
+                                <p className="text-xs text-muted-foreground">{order.email}</p>
+                                <p className="text-xs text-muted-foreground">
+                                  {order.shipping_address.city}, {order.shipping_address.province}
+                                </p>
+                              </td>
+                              <td className="p-4 text-sm">{order.items.length} items</td>
+                              <td className="p-4 font-medium">
+                                {formatPrice(order.total)}
+                              </td>
+                              <td className="p-4">
+                                <Badge variant={config.variant}>
+                                  {order.status}
+                                </Badge>
+                              </td>
+                              <td className="p-4">
+                                <Badge variant={order.payment_status === "paid" ? "success" : "warning"}>
+                                  {order.payment_status}
+                                </Badge>
+                              </td>
+                              <td className="p-4 text-sm text-muted-foreground">
+                                {new Date(order.created_at).toLocaleDateString("en-ZA")}
+                              </td>
+                              <td className="p-4">
+                                <button
+                                  onClick={() => setSelectedOrder(order)}
+                                  className="p-1.5 hover:bg-secondary rounded transition-colors"
+                                >
+                                  <Eye className="h-4 w-4 text-muted-foreground" />
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -432,12 +547,75 @@ export default function AdminPage() {
           {/* Customers Tab */}
           {activeTab === "customers" && (
             <div className="space-y-6">
-              <h1 className="text-2xl font-bold">Customers</h1>
-              <div className="bg-card border border-border rounded-xl p-8 text-center">
-                <Users className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground">
-                  Customer management will be connected to Supabase database
-                </p>
+              <div className="flex items-center justify-between">
+                <h1 className="text-2xl font-bold">Customers</h1>
+                <button
+                  onClick={fetchCustomers}
+                  className="p-2 hover:bg-secondary rounded-lg"
+                >
+                  <RefreshCw className={`h-4 w-4 ${customersLoading ? "animate-spin" : ""}`} />
+                </button>
+              </div>
+
+              {/* Search */}
+              <div className="relative max-w-md">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search customers..."
+                  className="pl-10"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+
+              {/* Customers Table */}
+              <div className="bg-card border border-border rounded-xl overflow-hidden">
+                {customersLoading ? (
+                  <div className="p-8 text-center">
+                    <Loader2 className="h-8 w-8 animate-spin text-m-blue mx-auto" />
+                  </div>
+                ) : filteredCustomers.length === 0 ? (
+                  <div className="p-8 text-center text-muted-foreground">
+                    No customers found
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b border-border bg-secondary/50">
+                          <th className="text-left p-4 text-sm font-medium text-muted-foreground">
+                            Name
+                          </th>
+                          <th className="text-left p-4 text-sm font-medium text-muted-foreground">
+                            Email
+                          </th>
+                          <th className="text-left p-4 text-sm font-medium text-muted-foreground">
+                            Phone
+                          </th>
+                          <th className="text-left p-4 text-sm font-medium text-muted-foreground">
+                            Joined
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredCustomers.map((customer) => (
+                          <tr key={customer.id} className="border-b border-border">
+                            <td className="p-4 font-medium">
+                              {customer.first_name} {customer.last_name}
+                            </td>
+                            <td className="p-4 text-sm">{customer.email}</td>
+                            <td className="p-4 text-sm text-muted-foreground">
+                              {customer.phone || "-"}
+                            </td>
+                            <td className="p-4 text-sm text-muted-foreground">
+                              {new Date(customer.created_at).toLocaleDateString("en-ZA")}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -453,8 +631,14 @@ export default function AdminPage() {
                     Configure your store settings
                   </p>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <Input label="Store Name" value="My BM ZA" />
-                    <Input label="Contact Email" value="info@mybmza.co.za" />
+                    <div>
+                      <label className="text-sm font-medium mb-1 block">Store Name</label>
+                      <Input value="My BM ZA" disabled />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium mb-1 block">Contact Email</label>
+                      <Input value="info@mybmza.co.za" disabled />
+                    </div>
                   </div>
                 </div>
 
@@ -492,7 +676,7 @@ export default function AdminPage() {
                           PostgreSQL Database
                         </p>
                       </div>
-                      <Badge variant="warning">Setup Required</Badge>
+                      <Badge variant="success">Connected</Badge>
                     </div>
                   </div>
                 </div>
@@ -501,6 +685,116 @@ export default function AdminPage() {
           )}
         </div>
       </main>
+
+      {/* Order Detail Modal */}
+      {selectedOrder && (
+        <>
+          <div
+            className="fixed inset-0 bg-black/50 z-50"
+            onClick={() => setSelectedOrder(null)}
+          />
+          <div className="fixed right-0 top-0 h-full w-full max-w-lg bg-background z-50 shadow-xl overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-bold">Order {selectedOrder.order_number}</h2>
+                <button
+                  onClick={() => setSelectedOrder(null)}
+                  className="p-2 hover:bg-secondary rounded-lg"
+                >
+                  <XCircle className="h-5 w-5" />
+                </button>
+              </div>
+
+              <div className="space-y-6">
+                {/* Status */}
+                <div className="bg-secondary/50 rounded-lg p-4">
+                  <p className="text-sm text-muted-foreground mb-2">Current Status</p>
+                  <div className="flex items-center gap-2">
+                    <Badge variant={statusConfig[selectedOrder.status]?.variant || "warning"}>
+                      {selectedOrder.status}
+                    </Badge>
+                    <Badge variant={selectedOrder.payment_status === "paid" ? "success" : "warning"}>
+                      {selectedOrder.payment_status}
+                    </Badge>
+                  </div>
+                </div>
+
+                {/* Update Status */}
+                <div>
+                  <p className="text-sm font-medium mb-2">Update Status</p>
+                  <div className="flex flex-wrap gap-2">
+                    {["pending", "confirmed", "processing", "shipped", "delivered", "cancelled"].map((status) => (
+                      <Button
+                        key={status}
+                        size="sm"
+                        variant={selectedOrder.status === status ? "primary" : "outline"}
+                        onClick={() => updateOrderStatus(selectedOrder.id, status)}
+                      >
+                        {status}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Customer */}
+                <div>
+                  <p className="text-sm font-medium mb-2">Customer</p>
+                  <div className="bg-secondary/50 rounded-lg p-4">
+                    <p className="font-medium">
+                      {selectedOrder.shipping_address.firstName} {selectedOrder.shipping_address.lastName}
+                    </p>
+                    <p className="text-sm text-muted-foreground">{selectedOrder.email}</p>
+                    {selectedOrder.phone && (
+                      <p className="text-sm text-muted-foreground">{selectedOrder.phone}</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Shipping Address */}
+                <div>
+                  <p className="text-sm font-medium mb-2">Shipping Address</p>
+                  <div className="bg-secondary/50 rounded-lg p-4 text-sm">
+                    <p>{selectedOrder.shipping_address.address1}</p>
+                    <p>{selectedOrder.shipping_address.city}, {selectedOrder.shipping_address.province}</p>
+                  </div>
+                </div>
+
+                {/* Items */}
+                <div>
+                  <p className="text-sm font-medium mb-2">Items</p>
+                  <div className="space-y-2">
+                    {selectedOrder.items.map((item, idx) => (
+                      <div key={idx} className="flex justify-between text-sm bg-secondary/50 rounded-lg p-3">
+                        <div>
+                          <p className="font-medium line-clamp-1">{item.name.replace(/&#\d+;/g, "")}</p>
+                          <p className="text-muted-foreground">Qty: {item.quantity}</p>
+                        </div>
+                        <p className="font-medium">{formatPrice(item.total)}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Totals */}
+                <div className="border-t border-border pt-4 space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span>Subtotal</span>
+                    <span>{formatPrice(selectedOrder.subtotal)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span>Shipping</span>
+                    <span>{selectedOrder.shipping === 0 ? "Free" : formatPrice(selectedOrder.shipping)}</span>
+                  </div>
+                  <div className="flex justify-between font-bold text-lg pt-2 border-t border-border">
+                    <span>Total</span>
+                    <span className="text-m-blue">{formatPrice(selectedOrder.total)}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }

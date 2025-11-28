@@ -182,6 +182,14 @@ export function Header() {
       <nav className="hidden md:block border-b border-border">
         <div className="container mx-auto px-4">
           <ul className="flex items-center gap-1">
+            <li>
+              <Link
+                href="/supplier-products"
+                className="block px-4 py-3 text-sm font-medium text-m-blue hover:text-m-blue/80 transition-colors"
+              >
+                Shop All
+              </Link>
+            </li>
             {categories.map((category) => (
               <li
                 key={category.name}
@@ -253,6 +261,13 @@ export function Header() {
             </Link>
 
             <nav className="space-y-1">
+              <Link
+                href="/supplier-products"
+                className="block px-3 py-2 text-sm font-medium text-m-blue hover:bg-secondary rounded-lg"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Shop All Products
+              </Link>
               {categories.map((category) => (
                 <div key={category.name}>
                   <Link
