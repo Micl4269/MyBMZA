@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import Link from "next/link";
 import { VehicleSelector } from "@/components/vehicle/vehicle-selector";
 import { Button } from "@/components/ui/button";
