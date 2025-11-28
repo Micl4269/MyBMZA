@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { VehicleSelector } from "@/components/vehicle/vehicle-selector";
-import { ProductCard } from "@/components/product/product-card";
 import { Button } from "@/components/ui/button";
 import { MStripe } from "@/components/ui/m-stripe";
-import { getFeaturedProducts } from "@/data/products";
+import { SupplierProductCard } from "@/components/product/supplier-product-card";
+import { createClient } from "@/lib/supabase/server";
+import { SupplierProduct } from "@/types";
 import {
   Truck,
   Shield,
@@ -17,20 +18,17 @@ const categories = [
   {
     name: "Exterior",
     description: "Spoilers, grilles, mirror caps & more",
-    href: "/category/exterior",
-    image: "/images/categories/exterior.jpg",
+    href: "/supplier-products?category=exterior",
   },
   {
     name: "Interior",
     description: "Gearknobs, trim, door lights & more",
-    href: "/category/interior",
-    image: "/images/categories/interior.jpg",
+    href: "/supplier-products?category=interior",
   },
   {
-    name: "Curated Kits",
-    description: "Complete plug-and-play solutions",
-    href: "/category/kits",
-    image: "/images/categories/kits.jpg",
+    name: "Performance",
+    description: "Upgrades and accessories",
+    href: "/supplier-products",
   },
 ];
 
@@ -52,8 +50,31 @@ const features = [
   },
 ];
 
-export default function HomePage() {
-  const featuredProducts = getFeaturedProducts(8);
+async function getFeaturedProducts(): Promise<SupplierProduct[]> {
+  try {
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from("supplier_products")
+      .select("*")
+      .eq("in_stock", true)
+      .not("hosted_images", "is", null)
+      .order("created_at", { ascending: false })
+      .limit(8);
+
+    if (error) {
+      console.error("Error fetching products:", error);
+      return [];
+    }
+
+    return data || [];
+  } catch (error) {
+    console.error("Failed to fetch featured products:", error);
+    return [];
+  }
+}
+
+export default async function HomePage() {
+  const featuredProducts = await getFeaturedProducts();
 
   return (
     <div>
@@ -74,15 +95,15 @@ export default function HomePage() {
               Transform your ride with quality parts that fit perfectly.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link href="/category/exterior">
+              <Link href="/supplier-products">
                 <Button size="lg">
-                  Shop Exterior
+                  Shop All Products
                   <ChevronRight className="ml-1 h-4 w-4" />
                 </Button>
               </Link>
-              <Link href="/category/kits">
+              <Link href="/about">
                 <Button variant="outline" size="lg">
-                  View Curated Kits
+                  Learn More
                 </Button>
               </Link>
             </div>
@@ -125,7 +146,7 @@ export default function HomePage() {
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-2xl font-bold">Shop by Category</h2>
             <Link
-              href="/products"
+              href="/supplier-products"
               className="text-sm text-m-blue hover:underline flex items-center gap-1"
             >
               View all products
@@ -170,7 +191,7 @@ export default function HomePage() {
               <h2 className="text-2xl font-bold">Featured Products</h2>
             </div>
             <Link
-              href="/products"
+              href="/supplier-products"
               className="text-sm text-m-blue hover:underline flex items-center gap-1"
             >
               View all
@@ -178,11 +199,17 @@ export default function HomePage() {
             </Link>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-            {featuredProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
+          {featuredProducts.length > 0 ? (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+              {featuredProducts.map((product) => (
+                <SupplierProductCard key={product.id} product={product} />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12 text-muted-foreground">
+              <p>Loading products...</p>
+            </div>
+          )}
         </div>
       </section>
 
@@ -252,7 +279,7 @@ export default function HomePage() {
             aftermarket aesthetics.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link href="/products">
+            <Link href="/supplier-products">
               <Button
                 size="lg"
                 className="bg-m-blue hover:bg-m-blue-dark text-white"
