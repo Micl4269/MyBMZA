@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { sendOrderConfirmationEmail } from "@/lib/email";
 import crypto from "crypto";
 
 export async function POST(request: NextRequest) {
@@ -29,10 +30,10 @@ export async function POST(request: NextRequest) {
         const orderNumber = metadata?.orderNumber;
 
         if (orderNumber) {
-          // Get the order
+          // Get the full order with all details
           const { data: order } = await supabase
             .from("orders")
-            .select("id")
+            .select("*")
             .eq("order_number", orderNumber)
             .single();
 
@@ -53,6 +54,40 @@ export async function POST(request: NextRequest) {
               status: "confirmed",
               notes: `Payment received via Yoco (${checkoutId})`,
             });
+
+            // Send order confirmation email
+            try {
+              const shippingAddress = order.shipping_address as {
+                street: string;
+                city: string;
+                province: string;
+                postalCode: string;
+                firstName?: string;
+                lastName?: string;
+              };
+
+              await sendOrderConfirmationEmail({
+                orderNumber: order.order_number,
+                customerName: shippingAddress.firstName || order.email.split("@")[0],
+                customerEmail: order.email,
+                items: order.items,
+                subtotal: order.subtotal,
+                shipping: order.shipping,
+                total: order.total,
+                shippingAddress: {
+                  street: shippingAddress.street,
+                  city: shippingAddress.city,
+                  province: shippingAddress.province,
+                  postalCode: shippingAddress.postalCode,
+                },
+                shippingMethod: order.shipping_method === "express" ? "Express" : "Standard",
+                paymentMethod: "Yoco",
+              });
+              console.log(`Order confirmation email sent for ${orderNumber}`);
+            } catch (emailError) {
+              console.error("Failed to send order confirmation email:", emailError);
+              // Don't fail the webhook because of email error
+            }
 
             console.log(`Yoco payment complete for order ${orderNumber}`);
           }

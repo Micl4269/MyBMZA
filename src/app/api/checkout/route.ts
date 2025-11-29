@@ -38,6 +38,47 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Validate stock availability for supplier products
+    const supplierProductIds = items
+      .filter((item: { productType: string }) => item.productType === "supplier")
+      .map((item: { productId: string }) => item.productId);
+
+    if (supplierProductIds.length > 0) {
+      const { data: stockData, error: stockError } = await supabase
+        .from("supplier_products")
+        .select("id, name, in_stock")
+        .in("id", supplierProductIds);
+
+      if (stockError) {
+        console.error("Error checking stock:", stockError);
+        return NextResponse.json(
+          { error: "Failed to verify product availability" },
+          { status: 500 }
+        );
+      }
+
+      // Find out-of-stock items
+      const outOfStockItems = stockData?.filter((product) => !product.in_stock) || [];
+
+      if (outOfStockItems.length > 0) {
+        const outOfStockNames = outOfStockItems
+          .map((item) => item.name?.replace(/&#\d+;/g, "") || "Unknown product")
+          .join(", ");
+
+        return NextResponse.json(
+          {
+            error: "Some items are out of stock",
+            outOfStockItems: outOfStockItems.map((item) => ({
+              id: item.id,
+              name: item.name?.replace(/&#\d+;/g, "") || "Unknown product",
+            })),
+            message: `The following items are no longer available: ${outOfStockNames}. Please remove them from your cart and try again.`,
+          },
+          { status: 400 }
+        );
+      }
+    }
+
     // Check if customer exists, create if not
     let customerId = null;
     const { data: existingCustomer } = await supabase

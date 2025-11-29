@@ -1,15 +1,23 @@
 "use client";
 
-import { useState, useEffect, use } from "react";
+import { useState, useEffect, use, useCallback } from "react";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { MStripe } from "@/components/ui/m-stripe";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  type CarouselApi,
+} from "@/components/ui/carousel";
 import { useCartStore } from "@/store/cart-store";
 import { SupplierProduct } from "@/types";
 import { formatPrice } from "@/lib/utils";
+import { toast } from "sonner";
 import {
   ChevronRight,
   ChevronLeft,
@@ -24,6 +32,7 @@ import {
   Car,
   Loader2,
 } from "lucide-react";
+import { ProductSchema, BreadcrumbSchema } from "@/components/seo/json-ld";
 
 interface ProductPageProps {
   params: Promise<{ id: string }>;
@@ -35,7 +44,32 @@ export default function SupplierProductPage({ params }: ProductPageProps) {
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
+  const [carouselApi, setCarouselApi] = useState<CarouselApi>();
   const { addSupplierItem } = useCartStore();
+
+  // Sync carousel with selected image
+  const onCarouselSelect = useCallback(() => {
+    if (!carouselApi) return;
+    setSelectedImage(carouselApi.selectedScrollSnap());
+  }, [carouselApi]);
+
+  useEffect(() => {
+    if (!carouselApi) return;
+    carouselApi.on("select", onCarouselSelect);
+    return () => {
+      carouselApi.off("select", onCarouselSelect);
+    };
+  }, [carouselApi, onCarouselSelect]);
+
+  // Scroll to thumbnail when clicked
+  const scrollToImage = useCallback(
+    (index: number) => {
+      if (!carouselApi) return;
+      carouselApi.scrollTo(index);
+      setSelectedImage(index);
+    },
+    [carouselApi]
+  );
 
   useEffect(() => {
     async function fetchProduct() {
@@ -80,22 +114,48 @@ export default function SupplierProductPage({ params }: ProductPageProps) {
 
   const sourceLabel = product.source === "autostyle" ? "Autostyle" : "Carbon Sport";
 
-  const handleAddToCart = () => {
-    addSupplierItem(product, quantity);
-  };
-
   // Clean HTML entities from name
   const cleanName = product.name.replace(/&#\d+;/g, "");
+
+  const handleAddToCart = () => {
+    addSupplierItem(product, quantity);
+    toast.success("Added to cart", {
+      description: `${quantity}x ${cleanName.substring(0, 40)}${cleanName.length > 40 ? "..." : ""}`,
+      icon: <Check className="h-4 w-4" />,
+    });
+  };
 
   // Parse compatibility models for display
   const compatibilityDisplay = product.compatibility_models?.length
     ? product.compatibility_models.join(", ")
     : product.compatibility_text || "Check product details for compatibility";
 
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://mybmza.co.za";
+  const productUrl = `${siteUrl}/supplier-products/${product.id}`;
+
   return (
-    <div className="min-h-screen">
-      {/* Breadcrumb */}
-      <div className="border-b border-border">
+    <>
+      {/* SEO Structured Data */}
+      <ProductSchema
+        name={cleanName}
+        description={product.short_description || product.description || `${cleanName} - Premium BMW aftermarket part`}
+        image={images[0]}
+        price={product.price}
+        availability={product.in_stock}
+        sku={product.source_id}
+        url={productUrl}
+      />
+      <BreadcrumbSchema
+        items={[
+          { name: "Home", url: siteUrl },
+          { name: "Products", url: `${siteUrl}/supplier-products` },
+          { name: cleanName, url: productUrl },
+        ]}
+      />
+
+      <div className="min-h-screen">
+        {/* Breadcrumb */}
+        <div className="border-b border-border">
         <div className="container mx-auto px-4 py-3">
           <nav className="flex items-center gap-2 text-sm">
             <Link href="/" className="text-muted-foreground hover:text-foreground">
@@ -116,26 +176,53 @@ export default function SupplierProductPage({ params }: ProductPageProps) {
 
       <div className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
-          {/* Images */}
-          <div className="space-y-4">
-            {/* Main Image */}
-            <div className="aspect-square bg-secondary rounded-xl overflow-hidden relative">
-              {images[selectedImage] ? (
-                <Image
-                  src={images[selectedImage]}
-                  alt={cleanName}
-                  fill
-                  className="object-cover"
-                  unoptimized={!images[selectedImage].includes("supabase")}
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-                  <Package className="h-24 w-24" />
-                </div>
-              )}
+          {/* Images - Swipeable Carousel */}
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.4 }}
+            className="space-y-4"
+          >
+            {/* Main Image Carousel */}
+            <div className="relative">
+              <Carousel
+                setApi={setCarouselApi}
+                opts={{
+                  loop: images.length > 1,
+                  align: "start",
+                }}
+                className="w-full"
+              >
+                <CarouselContent>
+                  {images.length > 0 ? (
+                    images.map((image, index) => (
+                      <CarouselItem key={index}>
+                        <div className="aspect-square bg-secondary rounded-xl overflow-hidden relative">
+                          <Image
+                            src={image}
+                            alt={`${cleanName} - Image ${index + 1}`}
+                            fill
+                            className="object-cover"
+                            unoptimized={!image.includes("supabase")}
+                            priority={index === 0}
+                          />
+                        </div>
+                      </CarouselItem>
+                    ))
+                  ) : (
+                    <CarouselItem>
+                      <div className="aspect-square bg-secondary rounded-xl overflow-hidden relative">
+                        <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                          <Package className="h-24 w-24" />
+                        </div>
+                      </div>
+                    </CarouselItem>
+                  )}
+                </CarouselContent>
+              </Carousel>
 
-              {/* Badges */}
-              <div className="absolute top-4 left-4 flex flex-col gap-2">
+              {/* Badges - overlaid on carousel */}
+              <div className="absolute top-4 left-4 flex flex-col gap-2 z-10 pointer-events-none">
                 {hasDiscount && (
                   <Badge variant="error" size="md">
                     -{discountPercent}% OFF
@@ -149,60 +236,87 @@ export default function SupplierProductPage({ params }: ProductPageProps) {
               </div>
 
               {/* Source badge */}
-              <div className="absolute top-4 right-4">
+              <div className="absolute top-4 right-4 z-10 pointer-events-none">
                 <Badge variant="secondary" size="md" className="bg-background/80 backdrop-blur-sm">
                   {sourceLabel}
                 </Badge>
               </div>
 
-              {/* Image navigation arrows */}
+              {/* Navigation arrows */}
               {images.length > 1 && (
                 <>
                   <button
-                    onClick={() => setSelectedImage((prev) => (prev === 0 ? images.length - 1 : prev - 1))}
-                    className="absolute left-4 top-1/2 -translate-y-1/2 bg-background/80 backdrop-blur-sm rounded-full p-2 hover:bg-background transition-colors"
+                    onClick={() => carouselApi?.scrollPrev()}
+                    className="absolute left-4 top-1/2 -translate-y-1/2 bg-background/80 backdrop-blur-sm rounded-full p-2 hover:bg-background transition-colors z-10"
+                    aria-label="Previous image"
                   >
                     <ChevronLeft className="h-6 w-6" />
                   </button>
                   <button
-                    onClick={() => setSelectedImage((prev) => (prev === images.length - 1 ? 0 : prev + 1))}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 bg-background/80 backdrop-blur-sm rounded-full p-2 hover:bg-background transition-colors"
+                    onClick={() => carouselApi?.scrollNext()}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 bg-background/80 backdrop-blur-sm rounded-full p-2 hover:bg-background transition-colors z-10"
+                    aria-label="Next image"
                   >
                     <ChevronRight className="h-6 w-6" />
                   </button>
                 </>
               )}
+
+              {/* Dot indicators for mobile */}
+              {images.length > 1 && (
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
+                  {images.map((_, index) => (
+                    <button
+                      key={index}
+                      onClick={() => scrollToImage(index)}
+                      className={`w-2 h-2 rounded-full transition-all ${
+                        selectedImage === index
+                          ? "bg-white w-4"
+                          : "bg-white/50 hover:bg-white/75"
+                      }`}
+                      aria-label={`Go to image ${index + 1}`}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Thumbnails */}
             {images.length > 1 && (
-              <div className="flex gap-2 overflow-x-auto pb-2">
+              <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
                 {images.map((image, index) => (
-                  <button
+                  <motion.button
                     key={index}
-                    onClick={() => setSelectedImage(index)}
+                    onClick={() => scrollToImage(index)}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
                     className={`w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 border-2 transition-colors ${
                       selectedImage === index
-                        ? "border-m-blue"
+                        ? "border-m-blue ring-2 ring-m-blue/20"
                         : "border-transparent hover:border-m-blue/50"
                     }`}
                   >
                     <Image
                       src={image}
-                      alt={`${cleanName} ${index + 1}`}
+                      alt={`${cleanName} thumbnail ${index + 1}`}
                       width={80}
                       height={80}
                       className="w-full h-full object-cover"
                       unoptimized={!image.includes("supabase")}
                     />
-                  </button>
+                  </motion.button>
                 ))}
               </div>
             )}
-          </div>
+          </motion.div>
 
           {/* Product Info */}
-          <div className="space-y-6">
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.4, delay: 0.1 }}
+            className="space-y-6"
+          >
             <div>
               <div className="flex items-center gap-2 mb-2">
                 <Badge variant="m-blue" size="sm">
@@ -218,7 +332,12 @@ export default function SupplierProductPage({ params }: ProductPageProps) {
             </div>
 
             {/* Price */}
-            <div className="flex items-center gap-3">
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.2 }}
+              className="flex items-center gap-3"
+            >
               <span className="text-3xl font-bold text-m-blue">
                 {formatPrice(product.price)}
               </span>
@@ -227,7 +346,7 @@ export default function SupplierProductPage({ params }: ProductPageProps) {
                   {formatPrice(product.regular_price!)}
                 </span>
               )}
-            </div>
+            </motion.div>
 
             {/* Compatibility */}
             <div className="bg-secondary/50 rounded-xl p-4">
@@ -318,7 +437,7 @@ export default function SupplierProductPage({ params }: ProductPageProps) {
                 <span className="text-sm">Secure Packaging</span>
               </div>
             </div>
-          </div>
+          </motion.div>
         </div>
 
         {/* Product Details */}
@@ -352,5 +471,6 @@ export default function SupplierProductPage({ params }: ProductPageProps) {
         </div>
       </div>
     </div>
+    </>
   );
 }

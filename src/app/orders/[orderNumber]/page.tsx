@@ -3,7 +3,9 @@
 import { useEffect, useState, use } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { createBrowserClient } from "@supabase/ssr";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { MStripe } from "@/components/ui/m-stripe";
 import { Badge } from "@/components/ui/badge";
 import { formatPrice } from "@/lib/utils";
@@ -19,6 +21,7 @@ import {
   Mail,
   Phone,
   MapPin,
+  Shield,
 } from "lucide-react";
 
 interface OrderItem {
@@ -90,29 +93,118 @@ export default function OrderPage({ params }: OrderPageProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    async function fetchOrder() {
-      try {
-        const response = await fetch(`/api/orders?orderNumber=${orderNumber}`);
-        const data = await response.json();
+  // Verification state
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [needsVerification, setNeedsVerification] = useState(false);
+  const [verificationSent, setVerificationSent] = useState(false);
+  const [verificationCode, setVerificationCode] = useState("");
+  const [maskedEmail, setMaskedEmail] = useState("");
+  const [verifying, setVerifying] = useState(false);
+  const [sendingCode, setSendingCode] = useState(false);
 
-        if (!response.ok) {
-          setError(data.error || "Order not found");
-        } else {
-          setOrder(data.order);
-          setHistory(data.history || []);
-        }
-      } catch {
-        setError("Failed to load order");
-      } finally {
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+
+  // Check if user is authenticated
+  useEffect(() => {
+    async function checkAuth() {
+      const { data: { user } } = await supabase.auth.getUser();
+      setIsAuthenticated(!!user);
+
+      if (user) {
+        // User is logged in, fetch order directly
+        fetchOrder();
+      } else {
+        // User not logged in, needs verification
+        setNeedsVerification(true);
         setLoading(false);
       }
     }
+    checkAuth();
+  }, [supabase.auth]);
 
-    fetchOrder();
-  }, [orderNumber]);
+  async function fetchOrder() {
+    try {
+      const response = await fetch(`/api/orders?orderNumber=${orderNumber}`);
+      const data = await response.json();
 
-  if (loading) {
+      if (!response.ok) {
+        setError(data.error || "Order not found");
+      } else {
+        setOrder(data.order);
+        setHistory(data.history || []);
+      }
+    } catch {
+      setError("Failed to load order");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function sendVerificationCode() {
+    setSendingCode(true);
+    setError(null);
+
+    try {
+      const response = await fetch("/api/orders/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderNumber }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.error || "Failed to send verification code");
+        return;
+      }
+
+      setMaskedEmail(data.maskedEmail);
+      setVerificationSent(true);
+    } catch {
+      setError("Failed to send verification code. Please try again.");
+    } finally {
+      setSendingCode(false);
+    }
+  }
+
+  async function verifyCode() {
+    if (verificationCode.length !== 6) {
+      setError("Please enter a 6-digit code");
+      return;
+    }
+
+    setVerifying(true);
+    setError(null);
+
+    try {
+      const response = await fetch(
+        `/api/orders/verify?orderNumber=${orderNumber}&code=${verificationCode}`
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.error || "Invalid verification code");
+        setVerifying(false);
+        return;
+      }
+
+      // Success! Set order data
+      setOrder(data.order);
+      setHistory(data.order.status_history || []);
+      setNeedsVerification(false);
+    } catch {
+      setError("Verification failed. Please try again.");
+    } finally {
+      setVerifying(false);
+    }
+  }
+
+  // Loading state
+  if (loading || isAuthenticated === null) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-m-blue" />
@@ -120,6 +212,125 @@ export default function OrderPage({ params }: OrderPageProps) {
     );
   }
 
+  // Verification required for guests
+  if (needsVerification && !order) {
+    return (
+      <div className="min-h-screen bg-secondary/30 flex items-center justify-center p-4">
+        <div className="w-full max-w-md">
+          <div className="text-center mb-8">
+            <Link href="/" className="inline-flex items-center gap-1">
+              <span className="text-3xl font-bold">My</span>
+              <span className="text-3xl font-bold text-m-blue">BM</span>
+              <span className="text-3xl font-bold">ZA</span>
+            </Link>
+          </div>
+
+          <div className="bg-card border border-border rounded-xl p-6">
+            <MStripe size="sm" className="mb-6 -mx-6 -mt-6 rounded-t-xl overflow-hidden" />
+
+            <div className="text-center mb-6">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-m-blue/10 rounded-full mb-4">
+                <Shield className="h-8 w-8 text-m-blue" />
+              </div>
+              <h1 className="text-2xl font-bold mb-2">Verify Your Email</h1>
+              <p className="text-muted-foreground text-sm">
+                To view order <strong>#{orderNumber}</strong>, please verify your email address.
+              </p>
+            </div>
+
+            {error && (
+              <div className="flex items-center gap-2 p-3 bg-m-red/10 text-m-red rounded-lg mb-4">
+                <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                <p className="text-sm">{error}</p>
+              </div>
+            )}
+
+            {!verificationSent ? (
+              <div className="space-y-4">
+                <p className="text-sm text-muted-foreground text-center">
+                  We'll send a verification code to the email address used for this order.
+                </p>
+                <Button
+                  onClick={sendVerificationCode}
+                  className="w-full"
+                  size="lg"
+                  disabled={sendingCode}
+                >
+                  {sendingCode ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      <Mail className="h-4 w-4 mr-2" />
+                      Send Verification Code
+                    </>
+                  )}
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <p className="text-sm text-center">
+                  We sent a code to <strong>{maskedEmail}</strong>
+                </p>
+
+                <div>
+                  <label className="text-sm font-medium mb-1 block">Verification Code</label>
+                  <Input
+                    type="text"
+                    value={verificationCode}
+                    onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                    placeholder="Enter 6-digit code"
+                    className="text-center text-lg tracking-widest"
+                    maxLength={6}
+                  />
+                </div>
+
+                <Button
+                  onClick={verifyCode}
+                  className="w-full"
+                  size="lg"
+                  disabled={verifying || verificationCode.length !== 6}
+                >
+                  {verifying ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Verifying...
+                    </>
+                  ) : (
+                    "Verify & View Order"
+                  )}
+                </Button>
+
+                <button
+                  onClick={() => {
+                    setVerificationSent(false);
+                    setVerificationCode("");
+                    setError(null);
+                  }}
+                  className="text-sm text-m-blue hover:underline w-full text-center"
+                >
+                  Didn't receive code? Try again
+                </button>
+              </div>
+            )}
+
+            <div className="mt-6 pt-6 border-t border-border text-center">
+              <p className="text-sm text-muted-foreground mb-2">Have an account?</p>
+              <Link href={`/login?next=/orders/${orderNumber}`}>
+                <Button variant="outline" size="sm">
+                  Sign In
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
   if (error || !order) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -147,11 +358,11 @@ export default function OrderPage({ params }: OrderPageProps) {
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         {/* Back Link */}
         <Link
-          href="/account"
+          href={isAuthenticated ? "/account" : "/"}
           className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6"
         >
           <ArrowLeft className="h-4 w-4" />
-          Back to Account
+          {isAuthenticated ? "Back to Account" : "Back to Home"}
         </Link>
 
         {/* Header */}
