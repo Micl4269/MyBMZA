@@ -61,29 +61,29 @@ export function CategoriesSection() {
             <Link
               key={category.name}
               href={category.href}
-              className={`group block relative rounded-xl overflow-hidden ${category.bgColor} aspect-[4/3] hover:scale-[1.02] transition-transform duration-300`}
+              className={`group block relative rounded-xl overflow-hidden ${category.bgColor} aspect-[2/1] hover:scale-[1.02] transition-transform duration-300`}
             >
               {/* Hover overlay */}
               <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
               {/* Large background icon */}
-              <div className="absolute top-4 right-4 opacity-10 group-hover:opacity-20 transition-opacity duration-300">
-                <category.Icon className="h-32 w-32 text-white" strokeWidth={1} />
+              <div className="absolute top-2 right-4 opacity-10 group-hover:opacity-20 transition-opacity duration-300">
+                <category.Icon className="h-20 w-20 text-white" strokeWidth={1} />
               </div>
 
               {/* Content */}
-              <div className="absolute inset-0 flex flex-col justify-end p-6">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 rounded-lg bg-m-blue/20 flex items-center justify-center">
-                    <category.Icon className="h-5 w-5 text-m-blue" />
+              <div className="absolute inset-0 flex flex-col justify-center p-5">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-8 h-8 rounded-lg bg-m-blue/20 flex items-center justify-center">
+                    <category.Icon className="h-4 w-4 text-m-blue" />
                   </div>
-                  <MStripe size="sm" className="w-12" />
+                  <MStripe size="sm" className="w-10" />
                 </div>
-                <h3 className="text-xl font-bold mb-1 text-white">{category.name}</h3>
-                <p className="text-sm text-gray-300">
+                <h3 className="text-lg font-bold mb-0.5 text-white">{category.name}</h3>
+                <p className="text-xs text-gray-300">
                   {category.description}
                 </p>
-                <span className="mt-3 text-sm text-m-blue font-medium flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                <span className="mt-2 text-sm text-m-blue font-medium flex items-center gap-1 group-hover:translate-x-1 transition-transform">
                   Shop now
                   <ChevronRight className="h-4 w-4" />
                 </span>
