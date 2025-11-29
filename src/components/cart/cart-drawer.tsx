@@ -71,11 +71,6 @@ function CartItemRow({
         {sku && (
           <p className="text-sm text-muted-foreground mt-0.5">{sku}</p>
         )}
-        {item.productType === "supplier" && (
-          <p className="text-xs text-muted-foreground mt-0.5">
-            Supplier Product
-          </p>
-        )}
 
         <div className="flex items-center justify-between mt-2">
           {/* Quantity controls */}

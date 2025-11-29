@@ -112,7 +112,6 @@ export default function SupplierProductPage({ params }: ProductPageProps) {
     ? Math.round((1 - product.price / product.regular_price!) * 100)
     : 0;
 
-  const sourceLabel = product.source === "autostyle" ? "Autostyle" : "Carbon Sport";
 
   // Clean HTML entities from name
   const cleanName = product.name.replace(/&#\d+;/g, "");
@@ -235,12 +234,6 @@ export default function SupplierProductPage({ params }: ProductPageProps) {
                 )}
               </div>
 
-              {/* Source badge */}
-              <div className="absolute top-4 right-4 z-10 pointer-events-none">
-                <Badge variant="secondary" size="md" className="bg-background/80 backdrop-blur-sm">
-                  {sourceLabel}
-                </Badge>
-              </div>
 
               {/* Navigation arrows */}
               {images.length > 1 && (
@@ -318,16 +311,11 @@ export default function SupplierProductPage({ params }: ProductPageProps) {
             className="space-y-6"
           >
             <div>
-              <div className="flex items-center gap-2 mb-2">
-                <Badge variant="m-blue" size="sm">
-                  {sourceLabel}
-                </Badge>
-                {product.primary_category && (
-                  <span className="text-sm text-muted-foreground">
-                    {product.primary_category}
-                  </span>
-                )}
-              </div>
+              {product.primary_category && (
+                <p className="text-sm text-muted-foreground mb-2">
+                  {product.primary_category}
+                </p>
+              )}
               <h1 className="text-2xl lg:text-3xl font-bold">{cleanName}</h1>
             </div>
 

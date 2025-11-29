@@ -17,7 +17,7 @@ export default function AboutPage() {
             <span className="text-m-blue">BMW Parts</span> Destination
           </h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            MyBMZA is your trusted source for quality aftermarket BMW parts and accessories.
+            MyBMZA is your destination for quality aftermarket BMW parts and accessories.
             We're passionate about BMWs and committed to helping enthusiasts find the parts
             they need at competitive prices.
           </p>
@@ -36,8 +36,7 @@ export default function AboutPage() {
                 South Africa shouldn't be so difficult.
               </p>
               <p>
-                We've partnered with trusted suppliers across the country to bring you
-                a curated selection of parts, accessories, and upgrades for your BMW.
+                We offer a curated selection of parts, accessories, and upgrades for your BMW.
                 Whether you're restoring a classic E30 or modifying a new G20, we've got
                 you covered.
               </p>

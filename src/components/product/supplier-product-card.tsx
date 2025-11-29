@@ -25,7 +25,6 @@ export function SupplierProductCard({ product }: SupplierProductCardProps) {
     ? Math.round((1 - product.price / product.regular_price!) * 100)
     : 0;
 
-  const sourceLabel = product.source === "autostyle" ? "Autostyle" : "Carbon Sport";
   const cleanName = product.name.replace(/&#\d+;/g, "");
 
   const handleAddToCart = (e: React.MouseEvent) => {
@@ -76,12 +75,6 @@ export function SupplierProductCard({ product }: SupplierProductCardProps) {
             )}
           </div>
 
-          {/* Source badge */}
-          <div className="absolute top-3 right-3">
-            <Badge variant="secondary" className="bg-background/80 backdrop-blur-sm text-xs">
-              {sourceLabel}
-            </Badge>
-          </div>
         </div>
 
         {/* Content */}

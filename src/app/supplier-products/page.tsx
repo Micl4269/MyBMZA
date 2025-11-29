@@ -6,7 +6,6 @@ import { ChevronRight } from "lucide-react";
 interface SearchParams {
   page?: string;
   q?: string;
-  source?: string;
   model?: string;
   inStock?: string;
   category?: string;
@@ -99,10 +98,6 @@ export default async function SupplierProductsPage({
     query = query.eq("in_stock", true);
   }
 
-  if (params.source) {
-    query = query.eq("source", params.source);
-  }
-
   if (params.model) {
     query = query.or(
       `compatibility_models.cs.{${params.model.toUpperCase()}},name.ilike.%${params.model}%`
@@ -129,7 +124,7 @@ export default async function SupplierProductsPage({
   if (showStats) {
     const { data: statsData } = await supabase
       .from("supplier_products")
-      .select("source, in_stock")
+      .select("in_stock")
       .then(({ data }) => {
         if (!data) return { data: null };
         const total = data.length;
@@ -144,14 +139,13 @@ export default async function SupplierProductsPage({
     ? categoryNames[params.subcategory] || params.subcategory
     : params.category
     ? categoryNames[params.category] || params.category
-    : "Supplier Products";
+    : "All Products";
 
   // Build pagination URL params
   const buildPaginationUrl = (newPage: number) => {
     const urlParams = new URLSearchParams();
     urlParams.set("page", newPage.toString());
     if (params.q) urlParams.set("q", params.q);
-    if (params.source) urlParams.set("source", params.source);
     if (params.model) urlParams.set("model", params.model);
     if (params.inStock) urlParams.set("inStock", params.inStock);
     if (params.category) urlParams.set("category", params.category);
@@ -194,7 +188,7 @@ export default async function SupplierProductsPage({
         <h1 className="text-3xl font-bold mb-2">{pageTitle}</h1>
         <p className="text-muted-foreground">
           {showStats && stats
-            ? `Browse ${stats.total.toLocaleString()} products from our suppliers. ${stats.inStock.toLocaleString()} in stock.`
+            ? `Browse ${stats.total.toLocaleString()} premium BMW parts. ${stats.inStock.toLocaleString()} in stock.`
             : `${count?.toLocaleString() || 0} products found`}
         </p>
       </div>
@@ -216,15 +210,6 @@ export default async function SupplierProductsPage({
             defaultValue={params.q}
             className="px-3 py-2 border rounded-lg bg-background text-foreground"
           />
-          <select
-            name="source"
-            defaultValue={params.source || ""}
-            className="px-3 py-2 border rounded-lg bg-background text-foreground"
-          >
-            <option value="">All Sources</option>
-            <option value="autostyle">Autostyle</option>
-            <option value="carbon-sport">Carbon Sport</option>
-          </select>
           <input
             type="text"
             name="model"
