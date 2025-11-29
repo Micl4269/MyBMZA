@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Image optimization - use placeholder images
+  // Image optimization for Vercel
   images: {
     remotePatterns: [
       {
@@ -9,17 +9,17 @@ const nextConfig: NextConfig = {
         hostname: "**",
       },
     ],
-    unoptimized: process.env.NODE_ENV === "production", // For Cloudflare Pages
+    // Enable image optimization on Vercel
+    formats: ["image/avif", "image/webp"],
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256],
   },
 
-  // Enable static export for Cloudflare Pages
-  // Uncomment for static export:
-  // output: "export",
+  // Compression
+  compress: true,
 
-  // Experimental features
-  experimental: {
-    // serverActions: true, // Enabled by default in Next.js 14+
-  },
+  // Production optimizations
+  poweredByHeader: false,
 
   // Environment variables
   env: {

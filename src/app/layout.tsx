@@ -3,17 +3,18 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
-import { CartDrawer } from "@/components/cart/cart-drawer";
-import { Toaster } from "@/components/ui/sonner";
 import {
   OrganizationSchema,
   WebSiteSchema,
   LocalBusinessSchema,
 } from "@/components/seo/json-ld";
+import { CartDrawer, Toaster } from "@/components/providers/client-components";
 
 const inter = Inter({
   variable: "--font-geist-sans",
   subsets: ["latin"],
+  display: "swap",
+  preload: true,
 });
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://mybmza.co.za";
@@ -89,6 +90,15 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        {/* Preconnect to critical third-party origins */}
+        <link
+          rel="preconnect"
+          href="https://rqfhbgiqzjhtwypkxcpt.supabase.co"
+          crossOrigin="anonymous"
+        />
+        <link rel="dns-prefetch" href="https://rqfhbgiqzjhtwypkxcpt.supabase.co" />
+
+        {/* Structured data */}
         <OrganizationSchema />
         <WebSiteSchema />
         <LocalBusinessSchema />
