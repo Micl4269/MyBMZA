@@ -1,6 +1,3 @@
-"use client";
-
-import { motion } from "framer-motion";
 import { Truck, Shield, Wrench, LucideIcon } from "lucide-react";
 
 interface Feature {
@@ -32,29 +29,21 @@ export function FeaturesBar() {
     <section className="border-y border-border bg-secondary/30">
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-border">
-          {features.map((feature, index) => (
-            <motion.div
+          {features.map((feature) => (
+            <div
               key={feature.title}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-50px" }}
-              transition={{ duration: 0.4, delay: index * 0.1 }}
               className="flex items-center gap-4 py-6 px-4 md:px-8"
             >
-              <motion.div
-                whileHover={{ scale: 1.1, rotate: 5 }}
-                transition={{ type: "spring", stiffness: 400, damping: 17 }}
-                className="w-12 h-12 rounded-full bg-m-blue/10 flex items-center justify-center flex-shrink-0"
-              >
+              <div className="w-12 h-12 rounded-full bg-m-blue/10 flex items-center justify-center flex-shrink-0 hover:scale-110 transition-transform">
                 <feature.icon className="h-6 w-6 text-m-blue" />
-              </motion.div>
+              </div>
               <div>
                 <h3 className="font-semibold">{feature.title}</h3>
                 <p className="text-sm text-muted-foreground">
                   {feature.description}
                 </p>
               </div>
-            </motion.div>
+            </div>
           ))}
         </div>
       </div>

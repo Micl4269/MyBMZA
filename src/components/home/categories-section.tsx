@@ -1,7 +1,4 @@
-"use client";
-
 import Link from "next/link";
-import { motion } from "framer-motion";
 import { MStripe } from "@/components/ui/m-stripe";
 import { ChevronRight } from "lucide-react";
 
@@ -30,13 +27,7 @@ export function CategoriesSection() {
   return (
     <section className="py-16">
       <div className="container mx-auto px-4">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-50px" }}
-          transition={{ duration: 0.4 }}
-          className="flex items-center justify-between mb-8"
-        >
+        <div className="flex items-center justify-between mb-8">
           <h2 className="text-2xl font-bold">Shop by Category</h2>
           <Link
             href="/supplier-products"
@@ -45,44 +36,32 @@ export function CategoriesSection() {
             View all products
             <ChevronRight className="h-4 w-4" />
           </Link>
-        </motion.div>
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {categories.map((category, index) => (
-            <motion.div
+          {categories.map((category) => (
+            <Link
               key={category.name}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-50px" }}
-              transition={{ duration: 0.4, delay: index * 0.1 }}
+              href={category.href}
+              className="group block relative rounded-xl overflow-hidden bg-secondary aspect-[4/3]"
             >
-              <Link
-                href={category.href}
-                className="group block relative rounded-xl overflow-hidden bg-secondary aspect-[4/3]"
-              >
-                <motion.div
-                  whileHover={{ scale: 1.05 }}
-                  transition={{ duration: 0.3 }}
-                  className={`absolute inset-0 bg-gradient-to-br ${category.gradient}`}
-                />
+              <div
+                className={`absolute inset-0 bg-gradient-to-br ${category.gradient} group-hover:scale-105 transition-transform duration-300`}
+              />
 
-                {/* Content */}
-                <div className="absolute inset-0 flex flex-col justify-end p-6">
-                  <MStripe size="sm" className="w-16 mb-3" />
-                  <h3 className="text-xl font-bold mb-1">{category.name}</h3>
-                  <p className="text-sm text-muted-foreground">
-                    {category.description}
-                  </p>
-                  <motion.span
-                    className="mt-3 text-sm text-m-blue font-medium flex items-center gap-1"
-                    whileHover={{ x: 5 }}
-                  >
-                    Shop now
-                    <ChevronRight className="h-4 w-4" />
-                  </motion.span>
-                </div>
-              </Link>
-            </motion.div>
+              {/* Content */}
+              <div className="absolute inset-0 flex flex-col justify-end p-6">
+                <MStripe size="sm" className="w-16 mb-3" />
+                <h3 className="text-xl font-bold mb-1">{category.name}</h3>
+                <p className="text-sm text-muted-foreground">
+                  {category.description}
+                </p>
+                <span className="mt-3 text-sm text-m-blue font-medium flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                  Shop now
+                  <ChevronRight className="h-4 w-4" />
+                </span>
+              </div>
+            </Link>
           ))}
         </div>
       </div>
