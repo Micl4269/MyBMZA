@@ -59,21 +59,14 @@ export const metadata: Metadata = {
     siteName: "My BM ZA",
     locale: "en_ZA",
     type: "website",
-    images: [
-      {
-        url: "/og-image.png",
-        width: 1200,
-        height: 630,
-        alt: "My BM ZA - Premium BMW Aftermarket Aesthetics",
-      },
-    ],
+    // Images are auto-generated from opengraph-image.tsx
   },
   twitter: {
     card: "summary_large_image",
     title: "My BM ZA | Premium BMW Aftermarket Aesthetics",
     description:
       "South Africa's premier destination for BMW aftermarket aesthetics. Curated plug-and-play solutions.",
-    images: ["/og-image.png"],
+    // Images are auto-generated from twitter-image.tsx
   },
   robots: {
     index: true,
