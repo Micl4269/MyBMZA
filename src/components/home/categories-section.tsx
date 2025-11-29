@@ -1,25 +1,36 @@
 import Link from "next/link";
 import { MStripe } from "@/components/ui/m-stripe";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Car, Gauge, Zap, LucideIcon } from "lucide-react";
 
-const categories = [
+interface Category {
+  name: string;
+  description: string;
+  href: string;
+  bgColor: string;
+  icon: LucideIcon;
+}
+
+const categories: Category[] = [
   {
     name: "Exterior",
     description: "Spoilers, grilles, mirror caps & more",
     href: "/supplier-products?category=exterior",
     bgColor: "bg-gradient-to-br from-slate-800 to-slate-900",
+    icon: Car,
   },
   {
     name: "Interior",
     description: "Gearknobs, trim, door lights & more",
     href: "/supplier-products?category=interior",
     bgColor: "bg-gradient-to-br from-slate-700 to-slate-800",
+    icon: Gauge,
   },
   {
     name: "Performance",
     description: "Upgrades and accessories",
     href: "/supplier-products",
     bgColor: "bg-gradient-to-br from-slate-900 to-black",
+    icon: Zap,
   },
 ];
 
@@ -48,9 +59,19 @@ export function CategoriesSection() {
               {/* Hover overlay */}
               <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
+              {/* Large background icon */}
+              <div className="absolute top-4 right-4 opacity-10 group-hover:opacity-20 transition-opacity duration-300">
+                <category.icon className="h-32 w-32 text-white" strokeWidth={1} />
+              </div>
+
               {/* Content */}
               <div className="absolute inset-0 flex flex-col justify-end p-6">
-                <MStripe size="sm" className="w-16 mb-3" />
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 rounded-lg bg-m-blue/20 flex items-center justify-center">
+                    <category.icon className="h-5 w-5 text-m-blue" />
+                  </div>
+                  <MStripe size="sm" className="w-12" />
+                </div>
                 <h3 className="text-xl font-bold mb-1 text-white">{category.name}</h3>
                 <p className="text-sm text-gray-300">
                   {category.description}
