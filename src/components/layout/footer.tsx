@@ -13,7 +13,7 @@ export function Footer() {
           <div>
             <div className="flex items-center gap-1 mb-4">
               <span className="text-2xl font-bold">My</span>
-              <span className="text-2xl font-bold text-m-blue">Beemer</span>
+              <span className="text-2xl font-bold text-m-blue">Beamer</span>
             </div>
             <p className="text-sm text-gray-400 mb-4">
               Premium BMW aftermarket aesthetics. Curated plug-and-play
@@ -21,7 +21,7 @@ export function Footer() {
             </p>
             <div className="flex items-center gap-4">
               <a
-                href="https://facebook.com/mybeemer"
+                href="https://facebook.com/mybeamer"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-gray-400 hover:text-m-blue transition-colors"
@@ -29,7 +29,7 @@ export function Footer() {
                 <Facebook className="h-5 w-5" />
               </a>
               <a
-                href="https://instagram.com/mybeemer"
+                href="https://instagram.com/mybeamer"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-gray-400 hover:text-m-blue transition-colors"
@@ -145,10 +145,10 @@ export function Footer() {
               <li className="flex items-center gap-2 text-gray-400">
                 <Mail className="h-4 w-4 flex-shrink-0" />
                 <a
-                  href="mailto:info@mybeemer.co.za"
+                  href="mailto:info@mybeamer.co.za"
                   className="hover:text-white transition-colors"
                 >
-                  info@mybeemer.co.za
+                  info@mybeamer.co.za
                 </a>
               </li>
             </ul>
@@ -187,7 +187,7 @@ export function Footer() {
           </div>
 
           <p className="text-center text-xs text-gray-500 mt-6">
-            &copy; {new Date().getFullYear()} My Beemer. All rights reserved. Not
+            &copy; {new Date().getFullYear()} My Beamer. All rights reserved. Not
             affiliated with BMW AG.
           </p>
         </div>

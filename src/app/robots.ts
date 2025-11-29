@@ -1,7 +1,7 @@
 import { MetadataRoute } from "next";
 
 export default function robots(): MetadataRoute.Robots {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://mybeemer.co.za";
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://mybeamer.co.za";
 
   return {
     rules: [

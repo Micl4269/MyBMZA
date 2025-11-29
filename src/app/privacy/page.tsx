@@ -22,9 +22,9 @@ export default function PrivacyPage() {
             <section>
               <h2 className="text-xl font-bold mb-4">Introduction</h2>
               <p className="text-muted-foreground">
-                My Beemer ("we", "our", or "us") is committed to protecting your privacy.
+                My Beamer ("we", "our", or "us") is committed to protecting your privacy.
                 This Privacy Policy explains how we collect, use, disclose, and safeguard
-                your information when you visit our website mybeemer.co.za. Please read this
+                your information when you visit our website mybeamer.co.za. Please read this
                 privacy policy carefully. By using our website, you consent to the practices
                 described in this policy.
               </p>
@@ -179,7 +179,7 @@ export default function PrivacyPage() {
                 If you have questions or concerns about this Privacy Policy or our data
                 practices, please contact us at:
                 <br /><br />
-                Email: privacy@mybeemer.co.za
+                Email: privacy@mybeamer.co.za
                 <br />
                 Address: Johannesburg, South Africa
               </p>

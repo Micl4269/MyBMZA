@@ -79,7 +79,7 @@ export default function ReturnsPage() {
                 <div>
                   <p className="font-medium">Contact Us</p>
                   <p className="text-sm text-muted-foreground">
-                    Email us at returns@mybeemer.co.za with your order number and reason
+                    Email us at returns@mybeamer.co.za with your order number and reason
                     for return. Include photos if the item is damaged or defective.
                   </p>
                 </div>

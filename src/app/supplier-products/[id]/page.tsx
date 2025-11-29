@@ -26,7 +26,7 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
   }
 
   const cleanName = product.name.replace(/&#\d+;/g, "");
-  const description = product.short_description || product.description || `${cleanName} - Premium BMW aftermarket part available at My Beemer`;
+  const description = product.short_description || product.description || `${cleanName} - Premium BMW aftermarket part available at My Beamer`;
   const cleanDescription = description.replace(/<[^>]*>/g, "").substring(0, 160);
   const images = product.hosted_images?.length ? product.hosted_images : product.images || [];
 
@@ -34,14 +34,14 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
     title: cleanName,
     description: cleanDescription,
     openGraph: {
-      title: `${cleanName} | My Beemer`,
+      title: `${cleanName} | My Beamer`,
       description: cleanDescription,
       images: images[0] ? [{ url: images[0], alt: cleanName }] : [],
       type: "website",
     },
     twitter: {
       card: "summary_large_image",
-      title: `${cleanName} | My Beemer`,
+      title: `${cleanName} | My Beamer`,
       description: cleanDescription,
       images: images[0] ? [images[0]] : [],
     },
@@ -63,7 +63,7 @@ export default async function SupplierProductPage({ params }: ProductPageProps) 
   }
 
   const cleanName = product.name.replace(/&#\d+;/g, "");
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://mybeemer.co.za";
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://mybeamer.co.za";
   const productUrl = `${siteUrl}/supplier-products/${product.id}`;
   const images = product.hosted_images?.length ? product.hosted_images : product.images || [];
 

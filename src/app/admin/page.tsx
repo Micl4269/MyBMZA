@@ -633,11 +633,11 @@ export default function AdminPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="text-sm font-medium mb-1 block">Store Name</label>
-                      <Input value="My Beemer" disabled />
+                      <Input value="My Beamer" disabled />
                     </div>
                     <div>
                       <label className="text-sm font-medium mb-1 block">Contact Email</label>
-                      <Input value="info@mybeemer.co.za" disabled />
+                      <Input value="info@mybeamer.co.za" disabled />
                     </div>
                   </div>
                 </div>

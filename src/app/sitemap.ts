@@ -2,7 +2,7 @@ import { MetadataRoute } from "next";
 import { createStaticClient } from "@/lib/supabase/server";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://mybeemer.co.za";
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://mybeamer.co.za";
 
   // Static pages
   const staticPages: MetadataRoute.Sitemap = [

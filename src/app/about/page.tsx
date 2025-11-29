@@ -17,7 +17,7 @@ export default function AboutPage() {
             <span className="text-m-blue">BMW Parts</span> Destination
           </h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            My Beemer is your destination for quality aftermarket BMW parts and accessories.
+            My Beamer is your destination for quality aftermarket BMW parts and accessories.
             We're passionate about BMWs and committed to helping enthusiasts find the parts
             they need at competitive prices.
           </p>
@@ -31,7 +31,7 @@ export default function AboutPage() {
             <h2 className="text-2xl font-bold mb-4">Our Story</h2>
             <div className="space-y-4 text-muted-foreground">
               <p>
-                Founded by BMW enthusiasts, for BMW enthusiasts. My Beemer was born out of
+                Founded by BMW enthusiasts, for BMW enthusiasts. My Beamer was born out of
                 a simple frustration: finding quality aftermarket parts for BMWs in
                 South Africa shouldn't be so difficult.
               </p>
@@ -48,7 +48,7 @@ export default function AboutPage() {
           </div>
 
           <div className="bg-card border border-border rounded-xl p-8">
-            <h3 className="font-semibold text-lg mb-6">Why Choose My Beemer?</h3>
+            <h3 className="font-semibold text-lg mb-6">Why Choose My Beamer?</h3>
             <div className="space-y-4">
               <div className="flex items-start gap-4">
                 <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center flex-shrink-0">

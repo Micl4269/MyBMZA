@@ -1,6 +1,6 @@
 import Script from "next/script";
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://mybeemer.co.za";
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://mybeamer.co.za";
 
 interface OrganizationSchemaProps {
   name?: string;
@@ -10,7 +10,7 @@ interface OrganizationSchemaProps {
 }
 
 export function OrganizationSchema({
-  name = "My Beemer",
+  name = "My Beamer",
   url = siteUrl,
   logo = `${siteUrl}/logo.svg`,
   description = "South Africa's premier destination for BMW aftermarket aesthetics. Curated plug-and-play solutions with nationwide shipping.",
@@ -49,7 +49,7 @@ interface WebSiteSchemaProps {
 }
 
 export function WebSiteSchema({
-  name = "My Beemer",
+  name = "My Beamer",
   url = siteUrl,
 }: WebSiteSchemaProps) {
   const schema = {
@@ -114,7 +114,7 @@ export function ProductSchema({
         : "https://schema.org/OutOfStock",
       seller: {
         "@type": "Organization",
-        name: "My Beemer",
+        name: "My Beamer",
       },
     },
   };
@@ -163,7 +163,7 @@ interface LocalBusinessSchemaProps {
 }
 
 export function LocalBusinessSchema({
-  name = "My Beemer",
+  name = "My Beamer",
   description = "Premium BMW aftermarket aesthetics retailer in South Africa",
   url = siteUrl,
 }: LocalBusinessSchemaProps) {

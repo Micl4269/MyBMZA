@@ -2,7 +2,7 @@ import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
 
-export const alt = "My Beemer - Premium BMW Aftermarket Aesthetics";
+export const alt = "My Beamer - Premium BMW Aftermarket Aesthetics";
 export const size = {
   width: 1200,
   height: 630,
@@ -60,7 +60,7 @@ export default async function Image() {
               letterSpacing: "-2px",
             }}
           >
-            My <span style={{ color: "#81C4FF" }}>Beemer</span>
+            My <span style={{ color: "#81C4FF" }}>Beamer</span>
           </div>
 
           {/* Tagline */}

@@ -161,7 +161,7 @@ export function Header() {
             <Link href="/" className="flex items-center gap-2">
               <div className="flex items-center gap-1">
                 <span className="text-2xl font-bold text-foreground">My</span>
-                <span className="text-2xl font-bold text-m-blue">Beemer</span>
+                <span className="text-2xl font-bold text-m-blue">Beamer</span>
               </div>
             </Link>
 
