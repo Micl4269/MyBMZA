@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 
 export function CTASection() {
   return (
-    <section className="py-16 bg-foreground text-background relative overflow-hidden">
+    <section className="py-16 bg-gray-900 text-white relative overflow-hidden">
       {/* Background decoration */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-0 right-0 w-96 h-96 bg-m-blue rounded-full blur-3xl opacity-10" />
@@ -20,11 +20,11 @@ export function CTASection() {
           />
         </div>
 
-        <h2 className="text-2xl lg:text-3xl font-bold mb-4">
+        <h2 className="text-2xl lg:text-3xl font-bold mb-4 text-white">
           Ready to Transform Your BMW?
         </h2>
 
-        <p className="text-gray-400 mb-8 max-w-xl mx-auto">
+        <p className="text-gray-300 mb-8 max-w-xl mx-auto">
           Join thousands of BMW enthusiasts who trust My BM ZA for premium
           aftermarket aesthetics.
         </p>
@@ -42,7 +42,7 @@ export function CTASection() {
             <Button
               variant="outline"
               size="lg"
-              className="border-white text-white hover:bg-white hover:text-foreground hover:scale-[1.02] active:scale-[0.98] transition-transform"
+              className="border-gray-400 text-white hover:bg-white hover:text-gray-900 hover:scale-[1.02] active:scale-[0.98] transition-transform"
             >
               Contact Us
             </Button>

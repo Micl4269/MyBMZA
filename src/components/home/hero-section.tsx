@@ -22,7 +22,7 @@ export function HeroSection() {
           </div>
 
           {/* Main heading - LCP element, render immediately */}
-          <h1 className="text-4xl lg:text-5xl xl:text-6xl font-bold mb-4 tracking-tight">
+          <h1 className="text-4xl lg:text-5xl xl:text-6xl font-bold mb-4 tracking-tight text-foreground">
             Premium BMW{" "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-m-blue to-m-blue-dark">
               Aftermarket Aesthetics
