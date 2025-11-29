@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { SupplierProductCard } from "@/components/product/supplier-product-card";
+import { MobileFilterDrawer } from "@/components/product/mobile-filter-drawer";
 import Link from "next/link";
 import { ChevronRight, ChevronDown } from "lucide-react";
 import { SpoilerIcon, SteeringWheelIcon, KeyCoverIcon } from "@/components/icons/car-parts";
@@ -66,6 +67,7 @@ const categoryStructure = [
     id: "exterior",
     name: "Exterior",
     Icon: SpoilerIcon,
+    icon: "exterior" as const,
     subcategories: [
       { id: "spoilers", name: "Spoilers" },
       { id: "mirror-caps", name: "Mirror Caps" },
@@ -78,6 +80,7 @@ const categoryStructure = [
     id: "interior",
     name: "Interior",
     Icon: SteeringWheelIcon,
+    icon: "interior" as const,
     subcategories: [
       { id: "gearknobs", name: "Gearknobs" },
       { id: "steering-wheels", name: "Steering Wheels" },
@@ -90,6 +93,7 @@ const categoryStructure = [
     id: "accessories",
     name: "Accessories",
     Icon: KeyCoverIcon,
+    icon: "accessories" as const,
     subcategories: [
       { id: "gearknob-kits", name: "Gearknob Kits" },
       { id: "interior-kits", name: "Interior Kits" },
@@ -223,7 +227,7 @@ export default async function SupplierProductsPage({
       )}
 
       {/* Header */}
-      <div className="mb-8">
+      <div className="mb-6">
         <h1 className="text-3xl font-bold mb-2">{pageTitle}</h1>
         <p className="text-muted-foreground">
           {showStats && stats
@@ -232,9 +236,22 @@ export default async function SupplierProductsPage({
         </p>
       </div>
 
+      {/* Mobile Filter Button */}
+      <div className="mb-4">
+        <MobileFilterDrawer
+          params={params}
+          categoryStructure={categoryStructure.map(c => ({
+            id: c.id,
+            name: c.name,
+            icon: c.icon,
+            subcategories: c.subcategories,
+          }))}
+        />
+      </div>
+
       <div className="flex flex-col lg:flex-row gap-8">
-        {/* Sidebar - Category Filters */}
-        <aside className="lg:w-64 flex-shrink-0">
+        {/* Sidebar - Category Filters (Desktop only) */}
+        <aside className="hidden lg:block lg:w-64 flex-shrink-0">
           <div className="sticky top-24 space-y-6">
             {/* Search & Filters */}
             <div className="bg-card border border-border rounded-xl p-4">
