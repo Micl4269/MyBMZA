@@ -1,13 +1,20 @@
 import Link from "next/link";
 import { MStripe } from "@/components/ui/m-stripe";
-import { ChevronRight, Car, Gauge, Zap, LucideIcon } from "lucide-react";
+import { ChevronRight } from "lucide-react";
+import { SpoilerIcon, SteeringWheelIcon, KeyCoverIcon } from "@/components/icons/car-parts";
+import { ComponentType } from "react";
+
+interface IconProps {
+  className?: string;
+  strokeWidth?: number;
+}
 
 interface Category {
   name: string;
   description: string;
   href: string;
   bgColor: string;
-  icon: LucideIcon;
+  Icon: ComponentType<IconProps>;
 }
 
 const categories: Category[] = [
@@ -16,21 +23,21 @@ const categories: Category[] = [
     description: "Spoilers, grilles, mirror caps & more",
     href: "/supplier-products?category=exterior",
     bgColor: "bg-gradient-to-br from-slate-800 to-slate-900",
-    icon: Car,
+    Icon: SpoilerIcon,
   },
   {
     name: "Interior",
     description: "Gearknobs, trim, door lights & more",
     href: "/supplier-products?category=interior",
     bgColor: "bg-gradient-to-br from-slate-700 to-slate-800",
-    icon: Gauge,
+    Icon: SteeringWheelIcon,
   },
   {
-    name: "Performance",
-    description: "Upgrades and accessories",
+    name: "Accessories",
+    description: "Key covers, badges & more",
     href: "/supplier-products",
     bgColor: "bg-gradient-to-br from-slate-900 to-black",
-    icon: Zap,
+    Icon: KeyCoverIcon,
   },
 ];
 
@@ -61,14 +68,14 @@ export function CategoriesSection() {
 
               {/* Large background icon */}
               <div className="absolute top-4 right-4 opacity-10 group-hover:opacity-20 transition-opacity duration-300">
-                <category.icon className="h-32 w-32 text-white" strokeWidth={1} />
+                <category.Icon className="h-32 w-32 text-white" strokeWidth={1} />
               </div>
 
               {/* Content */}
               <div className="absolute inset-0 flex flex-col justify-end p-6">
                 <div className="flex items-center gap-3 mb-3">
                   <div className="w-10 h-10 rounded-lg bg-m-blue/20 flex items-center justify-center">
-                    <category.icon className="h-5 w-5 text-m-blue" />
+                    <category.Icon className="h-5 w-5 text-m-blue" />
                   </div>
                   <MStripe size="sm" className="w-12" />
                 </div>

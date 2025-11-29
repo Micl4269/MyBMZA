@@ -1,7 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { SupplierProductCard } from "@/components/product/supplier-product-card";
 import Link from "next/link";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, ChevronDown } from "lucide-react";
+import { SpoilerIcon, SteeringWheelIcon, KeyCoverIcon } from "@/components/icons/car-parts";
 
 interface SearchParams {
   page?: string;
@@ -58,6 +59,44 @@ const categoryNames: Record<string, string> = {
   "interior-kits": "Interior Upgrade Kits",
   "exterior-kits": "Exterior Styling Kits",
 };
+
+// Category structure for sidebar navigation
+const categoryStructure = [
+  {
+    id: "exterior",
+    name: "Exterior",
+    Icon: SpoilerIcon,
+    subcategories: [
+      { id: "spoilers", name: "Spoilers" },
+      { id: "mirror-caps", name: "Mirror Caps" },
+      { id: "grilles", name: "Grilles" },
+      { id: "badges", name: "Badges & Emblems" },
+      { id: "exterior-trim", name: "Exterior Trim" },
+    ],
+  },
+  {
+    id: "interior",
+    name: "Interior",
+    Icon: SteeringWheelIcon,
+    subcategories: [
+      { id: "gearknobs", name: "Gearknobs" },
+      { id: "steering-wheels", name: "Steering Wheels" },
+      { id: "door-lights", name: "Door Lights" },
+      { id: "boot-covers", name: "Boot Covers" },
+      { id: "interior-trim", name: "Interior Trim" },
+    ],
+  },
+  {
+    id: "accessories",
+    name: "Accessories",
+    Icon: KeyCoverIcon,
+    subcategories: [
+      { id: "gearknob-kits", name: "Gearknob Kits" },
+      { id: "interior-kits", name: "Interior Kits" },
+      { id: "exterior-kits", name: "Exterior Kits" },
+    ],
+  },
+];
 
 export default async function SupplierProductsPage({
   searchParams,
@@ -193,99 +232,181 @@ export default async function SupplierProductsPage({
         </p>
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-wrap gap-4 mb-6">
-        <form className="flex gap-2 flex-wrap" action="/supplier-products">
-          {/* Preserve category/subcategory in form */}
-          {params.category && (
-            <input type="hidden" name="category" value={params.category} />
+      <div className="flex flex-col lg:flex-row gap-8">
+        {/* Sidebar - Category Filters */}
+        <aside className="lg:w-64 flex-shrink-0">
+          <div className="sticky top-24 space-y-6">
+            {/* Search & Filters */}
+            <div className="bg-card border border-border rounded-xl p-4">
+              <h3 className="font-semibold mb-4">Filters</h3>
+              <form className="space-y-4" action="/supplier-products">
+                {/* Preserve category/subcategory in form */}
+                {params.category && (
+                  <input type="hidden" name="category" value={params.category} />
+                )}
+                {params.subcategory && (
+                  <input type="hidden" name="subcategory" value={params.subcategory} />
+                )}
+                <div>
+                  <label className="text-sm text-muted-foreground mb-1 block">Search</label>
+                  <input
+                    type="text"
+                    name="q"
+                    placeholder="Search products..."
+                    defaultValue={params.q}
+                    className="w-full px-3 py-2 border rounded-lg bg-background text-foreground text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm text-muted-foreground mb-1 block">BMW Model</label>
+                  <input
+                    type="text"
+                    name="model"
+                    placeholder="e.g., F30, E46"
+                    defaultValue={params.model}
+                    className="w-full px-3 py-2 border rounded-lg bg-background text-foreground text-sm"
+                  />
+                </div>
+                <label className="flex items-center gap-2 text-sm text-foreground">
+                  <input
+                    type="checkbox"
+                    name="inStock"
+                    value="true"
+                    defaultChecked={params.inStock === "true"}
+                    className="rounded"
+                  />
+                  In Stock Only
+                </label>
+                <button
+                  type="submit"
+                  className="w-full px-4 py-2 bg-m-blue text-white rounded-lg hover:bg-m-blue-dark text-sm font-medium"
+                >
+                  Apply Filters
+                </button>
+              </form>
+            </div>
+
+            {/* Category Navigation */}
+            <div className="bg-card border border-border rounded-xl p-4">
+              <h3 className="font-semibold mb-4">Categories</h3>
+              <nav className="space-y-1">
+                <Link
+                  href="/supplier-products"
+                  className={`block px-3 py-2 rounded-lg text-sm transition-colors ${
+                    !params.category && !params.subcategory
+                      ? "bg-m-blue/10 text-m-blue font-medium"
+                      : "hover:bg-secondary text-foreground"
+                  }`}
+                >
+                  All Products
+                </Link>
+
+                {categoryStructure.map((category) => {
+                  const isActive = params.category === category.id;
+                  const hasActiveSubcategory = category.subcategories.some(
+                    (sub) => params.subcategory === sub.id
+                  );
+                  const isExpanded = isActive || hasActiveSubcategory;
+
+                  return (
+                    <div key={category.id}>
+                      <Link
+                        href={`/supplier-products?category=${category.id}`}
+                        className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
+                          isActive && !params.subcategory
+                            ? "bg-m-blue/10 text-m-blue font-medium"
+                            : "hover:bg-secondary text-foreground"
+                        }`}
+                      >
+                        <category.Icon className="h-4 w-4" />
+                        <span className="flex-1">{category.name}</span>
+                        <ChevronDown
+                          className={`h-4 w-4 transition-transform ${
+                            isExpanded ? "rotate-180" : ""
+                          }`}
+                        />
+                      </Link>
+
+                      {isExpanded && (
+                        <div className="ml-6 mt-1 space-y-1 border-l border-border pl-3">
+                          {category.subcategories.map((sub) => (
+                            <Link
+                              key={sub.id}
+                              href={`/supplier-products?category=${category.id}&subcategory=${sub.id}`}
+                              className={`block px-3 py-1.5 rounded-lg text-sm transition-colors ${
+                                params.subcategory === sub.id
+                                  ? "bg-m-blue/10 text-m-blue font-medium"
+                                  : "hover:bg-secondary text-muted-foreground hover:text-foreground"
+                              }`}
+                            >
+                              {sub.name}
+                            </Link>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </nav>
+            </div>
+          </div>
+        </aside>
+
+        {/* Main Content */}
+        <main className="flex-1 min-w-0">
+          {/* Results count */}
+          <p className="text-sm text-muted-foreground mb-4">
+            Showing {products?.length || 0} of {count?.toLocaleString() || 0} products
+          </p>
+
+          {/* Products grid */}
+          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+            {products?.map((product) => (
+              <SupplierProductCard key={product.id} product={product} />
+            ))}
+          </div>
+
+          {/* Empty state */}
+          {(!products || products.length === 0) && (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground">No products found. Try adjusting your filters.</p>
+              {(params.category || params.subcategory) && (
+                <Link
+                  href="/supplier-products"
+                  className="inline-block mt-4 text-m-blue hover:underline"
+                >
+                  View all products
+                </Link>
+              )}
+            </div>
           )}
-          {params.subcategory && (
-            <input type="hidden" name="subcategory" value={params.subcategory} />
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex justify-center gap-2 mt-8">
+              {page > 1 && (
+                <Link
+                  href={buildPaginationUrl(page - 1)}
+                  className="px-4 py-2 border rounded-lg hover:bg-secondary"
+                >
+                  Previous
+                </Link>
+              )}
+              <span className="px-4 py-2">
+                Page {page} of {totalPages}
+              </span>
+              {page < totalPages && (
+                <Link
+                  href={buildPaginationUrl(page + 1)}
+                  className="px-4 py-2 border rounded-lg hover:bg-secondary"
+                >
+                  Next
+                </Link>
+              )}
+            </div>
           )}
-          <input
-            type="text"
-            name="q"
-            placeholder="Search products..."
-            defaultValue={params.q}
-            className="px-3 py-2 border rounded-lg bg-background text-foreground"
-          />
-          <input
-            type="text"
-            name="model"
-            placeholder="BMW Model (e.g., F30, E46)"
-            defaultValue={params.model}
-            className="px-3 py-2 border rounded-lg bg-background text-foreground"
-          />
-          <label className="flex items-center gap-2 px-3 py-2 text-foreground">
-            <input
-              type="checkbox"
-              name="inStock"
-              value="true"
-              defaultChecked={params.inStock === "true"}
-            />
-            In Stock Only
-          </label>
-          <button
-            type="submit"
-            className="px-4 py-2 bg-m-blue text-white rounded-lg hover:bg-m-blue-dark"
-          >
-            Filter
-          </button>
-        </form>
+        </main>
       </div>
-
-      {/* Results count */}
-      <p className="text-sm text-muted-foreground mb-4">
-        Showing {products?.length || 0} of {count?.toLocaleString() || 0} products
-      </p>
-
-      {/* Products grid */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
-        {products?.map((product) => (
-          <SupplierProductCard key={product.id} product={product} />
-        ))}
-      </div>
-
-      {/* Empty state */}
-      {(!products || products.length === 0) && (
-        <div className="text-center py-12">
-          <p className="text-muted-foreground">No products found. Try adjusting your filters.</p>
-          {(params.category || params.subcategory) && (
-            <Link
-              href="/supplier-products"
-              className="inline-block mt-4 text-m-blue hover:underline"
-            >
-              View all products
-            </Link>
-          )}
-        </div>
-      )}
-
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex justify-center gap-2 mt-8">
-          {page > 1 && (
-            <Link
-              href={buildPaginationUrl(page - 1)}
-              className="px-4 py-2 border rounded-lg hover:bg-secondary"
-            >
-              Previous
-            </Link>
-          )}
-          <span className="px-4 py-2">
-            Page {page} of {totalPages}
-          </span>
-          {page < totalPages && (
-            <Link
-              href={buildPaginationUrl(page + 1)}
-              className="px-4 py-2 border rounded-lg hover:bg-secondary"
-            >
-              Next
-            </Link>
-          )}
-        </div>
-      )}
     </div>
   );
 }
