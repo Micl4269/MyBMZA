@@ -8,10 +8,13 @@ import {
   bmwVehicles,
   getSeriesById,
   getYearsForGeneration,
+  getGenerationById,
+  getModelById,
 } from "@/data/bmw-vehicles";
 import { BMWGeneration, BMWModel } from "@/types";
-import { Car, X, Save } from "lucide-react";
+import { Car, X, Save, Check, Loader2 } from "lucide-react";
 import { useVehicleStore } from "@/store/vehicle-store";
+import { toast } from "sonner";
 
 interface VehicleSelectorProps {
   onSelect?: (vehicle: {
@@ -42,6 +45,8 @@ export function VehicleSelector({
   const [generations, setGenerations] = useState<BMWGeneration[]>([]);
   const [models, setModels] = useState<BMWModel[]>([]);
   const [years, setYears] = useState<number[]>([]);
+  const [isApplying, setIsApplying] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
 
   // Update generations when series changes
   useEffect(() => {
@@ -85,8 +90,13 @@ export function VehicleSelector({
     }
   }, [generationId, generations]);
 
-  const handleApply = () => {
+  const handleApply = async () => {
     if (seriesId && generationId && modelId && year) {
+      setIsApplying(true);
+
+      // Small delay for visual feedback
+      await new Promise(resolve => setTimeout(resolve, 300));
+
       const vehicle = {
         seriesId,
         generationId,
@@ -95,6 +105,23 @@ export function VehicleSelector({
       };
       setSelectedVehicle(vehicle);
       onSelect?.(vehicle);
+
+      // Get vehicle display name for toast
+      const genData = getGenerationById(generationId);
+      const modelData = getModelById(modelId);
+      const vehicleName = modelData && genData
+        ? `${year} ${modelData.model.name} (${genData.generation.code})`
+        : "your vehicle";
+
+      setIsApplying(false);
+      setShowSuccess(true);
+
+      toast.success("Vehicle filter applied", {
+        description: `Showing parts for ${vehicleName}`,
+      });
+
+      // Reset success state after animation
+      setTimeout(() => setShowSuccess(false), 2000);
     }
   };
 
@@ -285,10 +312,24 @@ export function VehicleSelector({
         {showSaveButton && (
           <Button
             onClick={handleApply}
-            disabled={!isComplete}
-            className="min-w-[140px]"
+            disabled={!isComplete || isApplying}
+            className={`min-w-[140px] transition-all duration-200 ${
+              showSuccess ? "bg-emerald-600 hover:bg-emerald-600" : ""
+            }`}
           >
-            Apply Filter
+            {isApplying ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Applying...
+              </>
+            ) : showSuccess ? (
+              <>
+                <Check className="h-4 w-4 mr-2" />
+                Applied!
+              </>
+            ) : (
+              "Apply Filter"
+            )}
           </Button>
         )}
       </div>

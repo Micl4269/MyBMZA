@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useTheme } from "next-themes";
 import { MStripe } from "@/components/ui/m-stripe";
 import { Button } from "@/components/ui/button";
 import { useCartStore } from "@/store/cart-store";
@@ -19,6 +20,8 @@ import {
   Car,
   Search,
   ChevronDown,
+  Sun,
+  Moon,
 } from "lucide-react";
 
 const categories = [
@@ -58,8 +61,15 @@ const categories = [
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
   const { items, openCart } = useCartStore();
   const { selectedVehicle } = useVehicleStore();
+  const { theme, setTheme } = useTheme();
+
+  // Avoid hydration mismatch
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const itemCount = items.reduce((acc, item) => acc + item.quantity, 0);
 
@@ -92,6 +102,23 @@ export function Header() {
               <span>Nationwide Shipping</span>
             </div>
             <div className="flex items-center gap-4 ml-auto">
+              {/* Theme toggle */}
+              {mounted && (
+                <button
+                  onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                  className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors"
+                  aria-label="Toggle theme"
+                >
+                  {theme === "dark" ? (
+                    <Sun className="h-4 w-4" />
+                  ) : (
+                    <Moon className="h-4 w-4" />
+                  )}
+                  <span className="hidden sm:inline">
+                    {theme === "dark" ? "Light" : "Dark"}
+                  </span>
+                </button>
+              )}
               <Link
                 href="/account"
                 className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors"

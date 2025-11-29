@@ -8,7 +8,7 @@ import {
   WebSiteSchema,
   LocalBusinessSchema,
 } from "@/components/seo/json-ld";
-import { CartDrawer, Toaster } from "@/components/providers/client-components";
+import { CartDrawer, Toaster, ThemeProvider } from "@/components/providers/client-components";
 
 const inter = Inter({
   variable: "--font-geist-sans",
@@ -94,7 +94,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         {/* Preconnect to critical third-party origins */}
         <link
@@ -110,11 +110,13 @@ export default function RootLayout({
         <LocalBusinessSchema />
       </head>
       <body className={`${inter.variable} antialiased`}>
-        <Header />
-        <main className="min-h-screen">{children}</main>
-        <Footer />
-        <CartDrawer />
-        <Toaster position="bottom-center" />
+        <ThemeProvider>
+          <Header />
+          <main className="min-h-screen">{children}</main>
+          <Footer />
+          <CartDrawer />
+          <Toaster position="bottom-center" />
+        </ThemeProvider>
       </body>
     </html>
   );
