@@ -22,7 +22,7 @@ export default function TermsPage() {
             <section>
               <h2 className="text-xl font-bold mb-4">1. Acceptance of Terms</h2>
               <p className="text-muted-foreground">
-                By accessing and using MyBMZA (mybmza.co.za), you accept and agree to be
+                By accessing and using My Beemer (mybeemer.co.za), you accept and agree to be
                 bound by the terms and provisions of this agreement. If you do not agree
                 to abide by these terms, please do not use this service.
               </p>
@@ -102,7 +102,7 @@ export default function TermsPage() {
               <h2 className="text-xl font-bold mb-4">8. Intellectual Property</h2>
               <p className="text-muted-foreground">
                 All content on this website, including text, graphics, logos, images, and
-                software, is the property of MyBMZA or its content suppliers and is protected
+                software, is the property of My Beemer or its content suppliers and is protected
                 by South African and international copyright laws. BMW and all related marks
                 are trademarks of BMW AG.
               </p>
@@ -111,7 +111,7 @@ export default function TermsPage() {
             <section>
               <h2 className="text-xl font-bold mb-4">9. Limitation of Liability</h2>
               <p className="text-muted-foreground">
-                To the maximum extent permitted by law, MyBMZA shall not be liable for any
+                To the maximum extent permitted by law, My Beemer shall not be liable for any
                 indirect, incidental, special, consequential, or punitive damages, or any
                 loss of profits or revenues, whether incurred directly or indirectly, or any
                 loss of data, use, goodwill, or other intangible losses.
@@ -121,7 +121,7 @@ export default function TermsPage() {
             <section>
               <h2 className="text-xl font-bold mb-4">10. Indemnification</h2>
               <p className="text-muted-foreground">
-                You agree to indemnify and hold harmless MyBMZA, its officers, directors,
+                You agree to indemnify and hold harmless My Beemer, its officers, directors,
                 employees, and agents from any claims, damages, losses, liabilities, and
                 expenses arising out of your use of the service or violation of these terms.
               </p>
@@ -150,7 +150,7 @@ export default function TermsPage() {
               <p className="text-muted-foreground">
                 For questions about these Terms of Service, please contact us at:
                 <br /><br />
-                Email: legal@mybmza.co.za
+                Email: legal@mybeemer.co.za
                 <br />
                 Address: Johannesburg, South Africa
               </p>

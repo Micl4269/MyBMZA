@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 100" width="400" height="100">
+  <!-- Background -->
+  <rect width="400" height="100" fill="#09090b"/>
+
+  <!-- M-Sport stripes -->
+  <rect x="0" y="85" width="400" height="5" fill="#0066B1"/>
+  <rect x="0" y="90" width="400" height="5" fill="#1E1E50"/>
+  <rect x="0" y="95" width="400" height="5" fill="#E31837"/>
+
+  <!-- Text: My -->
+  <text x="50" y="65" font-family="Arial, sans-serif" font-size="48" font-weight="bold" fill="#FAFAFA">My</text>
+
+  <!-- Text: BM (blue) -->
+  <text x="130" y="65" font-family="Arial, sans-serif" font-size="48" font-weight="bold" fill="#0066B1">BM</text>
+
+  <!-- Text: ZA -->
+  <text x="220" y="65" font-family="Arial, sans-serif" font-size="48" font-weight="bold" fill="#FAFAFA">ZA</text>
+</svg>

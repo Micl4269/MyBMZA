@@ -7,20 +7,6 @@ function generateVerificationCode(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
-// Store verification codes temporarily (in production, use Redis or database)
-// This is a simple in-memory store - codes expire after 10 minutes
-const verificationCodes: Map<string, { code: string; email: string; expires: number }> = new Map();
-
-// Clean up expired codes periodically
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, value] of verificationCodes.entries()) {
-    if (value.expires < now) {
-      verificationCodes.delete(key);
-    }
-  }
-}, 60000); // Clean every minute
-
 // POST: Send verification code
 export async function POST(request: NextRequest) {
   try {
@@ -38,7 +24,7 @@ export async function POST(request: NextRequest) {
     // Get order email
     const { data: order, error } = await supabase
       .from("orders")
-      .select("email, order_number")
+      .select("id, email, order_number")
       .eq("order_number", orderNumber)
       .single();
 
@@ -49,21 +35,30 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate and store verification code
+    // Generate verification code with 10 minute expiry
     const code = generateVerificationCode();
-    const expires = Date.now() + 10 * 60 * 1000; // 10 minutes
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
 
-    verificationCodes.set(orderNumber, {
-      code,
-      email: order.email,
-      expires,
-    });
+    // Store verification code in the order record
+    const { error: updateError } = await supabase
+      .from("orders")
+      .update({
+        verification_code: code,
+        verification_expires: expiresAt,
+      })
+      .eq("id", order.id);
+
+    if (updateError) {
+      return NextResponse.json(
+        { error: "Failed to generate verification code" },
+        { status: 500 }
+      );
+    }
 
     // Send verification email
     try {
       await sendOrderVerificationCode(order.email, orderNumber, code);
-    } catch (emailError) {
-      console.error("Failed to send verification email:", emailError);
+    } catch {
       return NextResponse.json(
         { error: "Failed to send verification email. Please try again." },
         { status: 500 }
@@ -78,8 +73,7 @@ export async function POST(request: NextRequest) {
       maskedEmail,
       message: `Verification code sent to ${maskedEmail}`,
     });
-  } catch (error) {
-    console.error("Verification send error:", error);
+  } catch {
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -101,36 +95,9 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Check verification code
-    const storedData = verificationCodes.get(orderNumber);
-
-    if (!storedData) {
-      return NextResponse.json(
-        { error: "Verification code expired or not found. Please request a new code." },
-        { status: 400 }
-      );
-    }
-
-    if (storedData.expires < Date.now()) {
-      verificationCodes.delete(orderNumber);
-      return NextResponse.json(
-        { error: "Verification code has expired. Please request a new code." },
-        { status: 400 }
-      );
-    }
-
-    if (storedData.code !== code) {
-      return NextResponse.json(
-        { error: "Invalid verification code. Please check and try again." },
-        { status: 400 }
-      );
-    }
-
-    // Code is valid - delete it (one-time use)
-    verificationCodes.delete(orderNumber);
-
-    // Fetch full order details
     const supabase = await createClient();
+
+    // Get order with verification code
     const { data: order, error } = await supabase
       .from("orders")
       .select("*")
@@ -144,6 +111,42 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Check if verification code exists
+    if (!order.verification_code || !order.verification_expires) {
+      return NextResponse.json(
+        { error: "Verification code expired or not found. Please request a new code." },
+        { status: 400 }
+      );
+    }
+
+    // Check if code has expired
+    if (new Date(order.verification_expires) < new Date()) {
+      // Clear expired code
+      await supabase
+        .from("orders")
+        .update({ verification_code: null, verification_expires: null })
+        .eq("id", order.id);
+
+      return NextResponse.json(
+        { error: "Verification code has expired. Please request a new code." },
+        { status: 400 }
+      );
+    }
+
+    // Check if code matches
+    if (order.verification_code !== code) {
+      return NextResponse.json(
+        { error: "Invalid verification code. Please check and try again." },
+        { status: 400 }
+      );
+    }
+
+    // Code is valid - clear it (one-time use)
+    await supabase
+      .from("orders")
+      .update({ verification_code: null, verification_expires: null })
+      .eq("id", order.id);
+
     // Fetch status history
     const { data: statusHistory } = await supabase
       .from("order_status_history")
@@ -151,16 +154,18 @@ export async function GET(request: NextRequest) {
       .eq("order_id", order.id)
       .order("created_at", { ascending: true });
 
+    // Remove verification fields from response
+    const { verification_code: _vc, verification_expires: _ve, ...orderData } = order;
+
     return NextResponse.json({
       success: true,
       verified: true,
       order: {
-        ...order,
+        ...orderData,
         status_history: statusHistory || [],
       },
     });
-  } catch (error) {
-    console.error("Verification check error:", error);
+  } catch {
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

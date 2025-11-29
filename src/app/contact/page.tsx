@@ -108,10 +108,10 @@ export default function ContactPage() {
                   <div>
                     <p className="font-medium">Email</p>
                     <a
-                      href="mailto:support@mybmza.co.za"
+                      href="mailto:support@mybeemer.co.za"
                       className="text-muted-foreground hover:text-m-blue"
                     >
-                      support@mybmza.co.za
+                      support@mybeemer.co.za
                     </a>
                   </div>
                 </div>

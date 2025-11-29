@@ -135,6 +135,21 @@ export function VehicleSelector({
 
   const isComplete = seriesId && generationId && modelId && year;
 
+  // Auto-apply selection when all fields are complete and showSaveButton is false
+  // This is used in the garage page where there's a separate "Save to Garage" button
+  useEffect(() => {
+    if (!showSaveButton && isComplete) {
+      const vehicle = {
+        seriesId,
+        generationId,
+        modelId,
+        year: Number(year),
+      };
+      setSelectedVehicle(vehicle);
+      onSelect?.(vehicle);
+    }
+  }, [seriesId, generationId, modelId, year, showSaveButton, isComplete, setSelectedVehicle, onSelect]);
+
   const seriesOptions = bmwVehicles.map((s) => ({
     value: s.id,
     label: s.name,

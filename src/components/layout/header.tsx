@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useState, useEffect, useRef } from "react";
 import { useTheme } from "next-themes";
 import { MStripe } from "@/components/ui/m-stripe";
 import { Button } from "@/components/ui/button";
@@ -60,16 +61,37 @@ const categories = [
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
   const { items, openCart } = useCartStore();
   const { selectedVehicle } = useVehicleStore();
   const { theme, setTheme } = useTheme();
+  const router = useRouter();
+  const mobileSearchRef = useRef<HTMLInputElement>(null);
 
   // Avoid hydration mismatch
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Focus mobile search input when opened
+  useEffect(() => {
+    if (mobileSearchOpen && mobileSearchRef.current) {
+      mobileSearchRef.current.focus();
+    }
+  }, [mobileSearchOpen]);
+
+  // Handle search submission
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      router.push(`/supplier-products?q=${encodeURIComponent(searchQuery.trim())}`);
+      setSearchQuery("");
+      setMobileSearchOpen(false);
+    }
+  };
 
   const itemCount = items.reduce((acc, item) => acc + item.quantity, 0);
 
@@ -139,8 +161,7 @@ export function Header() {
             <Link href="/" className="flex items-center gap-2">
               <div className="flex items-center gap-1">
                 <span className="text-2xl font-bold text-foreground">My</span>
-                <span className="text-2xl font-bold text-m-blue">BM</span>
-                <span className="text-2xl font-bold text-foreground">ZA</span>
+                <span className="text-2xl font-bold text-m-blue">Beemer</span>
               </div>
             </Link>
 
@@ -161,21 +182,34 @@ export function Header() {
             </Link>
 
             {/* Search - Desktop */}
-            <div className="hidden lg:flex items-center flex-1 max-w-md mx-6">
+            <form onSubmit={handleSearch} className="hidden lg:flex items-center flex-1 max-w-md mx-6">
               <div className="relative w-full">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <input
                   type="search"
                   placeholder="Search parts..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full h-10 pl-10 pr-4 rounded-lg border border-input bg-background text-sm focus:border-m-blue focus:outline-none focus:ring-2 focus:ring-m-blue/20"
                 />
               </div>
-            </div>
+            </form>
 
             {/* Actions */}
             <div className="flex items-center gap-2">
-              <button className="lg:hidden p-2 hover:bg-secondary rounded-lg">
-                <Search className="h-5 w-5" />
+              <button
+                className="lg:hidden p-2 hover:bg-secondary rounded-lg"
+                onClick={() => {
+                  setMobileSearchOpen(!mobileSearchOpen);
+                  setMobileMenuOpen(false);
+                }}
+                aria-label="Toggle search"
+              >
+                {mobileSearchOpen ? (
+                  <X className="h-5 w-5" />
+                ) : (
+                  <Search className="h-5 w-5" />
+                )}
               </button>
 
               <button
@@ -191,7 +225,10 @@ export function Header() {
               </button>
 
               <button
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                onClick={() => {
+                  setMobileMenuOpen(!mobileMenuOpen);
+                  setMobileSearchOpen(false);
+                }}
                 className="md:hidden p-2 hover:bg-secondary rounded-lg"
               >
                 {mobileMenuOpen ? (
@@ -267,6 +304,31 @@ export function Header() {
           </ul>
         </div>
       </nav>
+
+      {/* Mobile search bar */}
+      {mobileSearchOpen && (
+        <div className="lg:hidden border-b border-border bg-background">
+          <div className="container mx-auto px-4 py-3">
+            <form onSubmit={handleSearch} className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <input
+                ref={mobileSearchRef}
+                type="search"
+                placeholder="Search BMW parts..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full h-10 pl-10 pr-12 rounded-lg border border-input bg-background text-sm focus:border-m-blue focus:outline-none focus:ring-2 focus:ring-m-blue/20"
+              />
+              <button
+                type="submit"
+                className="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1 bg-m-blue text-white text-sm rounded-md hover:bg-m-blue/90 transition-colors"
+              >
+                Search
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Mobile menu */}
       {mobileMenuOpen && (

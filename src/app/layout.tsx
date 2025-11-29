@@ -17,7 +17,7 @@ const inter = Inter({
   preload: true,
 });
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://mybmza.co.za";
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://mybeemer.co.za";
 
 export const viewport = {
   width: "device-width",
@@ -28,8 +28,8 @@ export const viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "My BM ZA | Premium BMW Aftermarket Aesthetics",
-    template: "%s | My BM ZA",
+    default: "My Beemer | Premium BMW Aftermarket Aesthetics",
+    template: "%s | My Beemer",
   },
   description:
     "South Africa's premier destination for BMW aftermarket aesthetics. Spoilers, grilles, gearknobs, door lights, interior & exterior trim. Curated plug-and-play solutions. Nationwide shipping from Gauteng.",
@@ -50,27 +50,27 @@ export const metadata: Metadata = {
     "G20 parts",
     "E90 parts",
   ],
-  authors: [{ name: "My BM ZA" }],
-  creator: "My BM ZA",
-  publisher: "My BM ZA",
+  authors: [{ name: "My Beemer" }],
+  creator: "My Beemer",
+  publisher: "My Beemer",
   formatDetection: {
     email: false,
     address: false,
     telephone: false,
   },
   openGraph: {
-    title: "My BM ZA | Premium BMW Aftermarket Aesthetics",
+    title: "My Beemer | Premium BMW Aftermarket Aesthetics",
     description:
       "South Africa's premier destination for BMW aftermarket aesthetics. Curated plug-and-play solutions with nationwide shipping.",
     url: siteUrl,
-    siteName: "My BM ZA",
+    siteName: "My Beemer",
     locale: "en_ZA",
     type: "website",
     // Images are auto-generated from opengraph-image.tsx
   },
   twitter: {
     card: "summary_large_image",
-    title: "My BM ZA | Premium BMW Aftermarket Aesthetics",
+    title: "My Beemer | Premium BMW Aftermarket Aesthetics",
     description:
       "South Africa's premier destination for BMW aftermarket aesthetics. Curated plug-and-play solutions.",
     // Images are auto-generated from twitter-image.tsx

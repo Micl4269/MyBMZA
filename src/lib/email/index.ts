@@ -14,8 +14,8 @@ function getResend(): Resend {
   return resendClient;
 }
 
-const FROM_EMAIL = process.env.EMAIL_FROM || "MyBMZA <orders@mybmza.co.za>";
-const SUPPORT_EMAIL = process.env.SUPPORT_EMAIL || "support@mybmza.co.za";
+const FROM_EMAIL = process.env.EMAIL_FROM || "My Beemer <orders@mybeemer.co.za>";
+const SUPPORT_EMAIL = process.env.SUPPORT_EMAIL || "support@mybeemer.co.za";
 
 export interface OrderItem {
   name: string;
@@ -71,7 +71,7 @@ export async function sendOrderConfirmationEmail(data: OrderEmailData) {
   const { data: result, error } = await getResend().emails.send({
     from: FROM_EMAIL,
     to: data.customerEmail,
-    subject: `Order Confirmed - ${data.orderNumber} | MyBMZA`,
+    subject: `Order Confirmed - ${data.orderNumber} | My Beemer`,
     html: `
 <!DOCTYPE html>
 <html>
@@ -144,7 +144,7 @@ export async function sendOrderConfirmationEmail(data: OrderEmailData) {
 
       <!-- Track Order Button -->
       <div style="text-align: center; margin-bottom: 30px;">
-        <a href="${process.env.NEXT_PUBLIC_SITE_URL || "https://mybmza.co.za"}/orders/${data.orderNumber}"
+        <a href="${process.env.NEXT_PUBLIC_SITE_URL || "https://mybeemer.co.za"}/orders/${data.orderNumber}"
            style="display: inline-block; background-color: #0066B1; color: #ffffff; padding: 12px 30px; border-radius: 8px; text-decoration: none; font-weight: 500;">
           Track Your Order
         </a>
@@ -154,7 +154,7 @@ export async function sendOrderConfirmationEmail(data: OrderEmailData) {
       <div style="text-align: center; padding-top: 20px; border-top: 1px solid #e4e4e7;">
         <p style="color: #71717a; font-size: 14px; margin: 0 0 10px 0;">Questions about your order?</p>
         <a href="mailto:${SUPPORT_EMAIL}" style="color: #0066B1; text-decoration: none;">${SUPPORT_EMAIL}</a>
-        <p style="color: #a1a1aa; font-size: 12px; margin: 20px 0 0 0;">© ${new Date().getFullYear()} MyBMZA. All rights reserved.</p>
+        <p style="color: #a1a1aa; font-size: 12px; margin: 20px 0 0 0;">© ${new Date().getFullYear()} My Beemer. All rights reserved.</p>
       </div>
     </div>
   </div>
@@ -180,11 +180,11 @@ ${data.shippingAddress.street}
 ${data.shippingAddress.city}, ${data.shippingAddress.province}
 ${data.shippingAddress.postalCode}
 
-Track your order: ${process.env.NEXT_PUBLIC_SITE_URL || "https://mybmza.co.za"}/orders/${data.orderNumber}
+Track your order: ${process.env.NEXT_PUBLIC_SITE_URL || "https://mybeemer.co.za"}/orders/${data.orderNumber}
 
 Questions? Contact us at ${SUPPORT_EMAIL}
 
-© ${new Date().getFullYear()} MyBMZA. All rights reserved.
+© ${new Date().getFullYear()} My Beemer. All rights reserved.
     `,
   });
 
@@ -278,7 +278,7 @@ export async function sendContactAutoReply(data: ContactFormData) {
   const { data: result, error } = await getResend().emails.send({
     from: FROM_EMAIL,
     to: data.email,
-    subject: `We received your message - MyBMZA`,
+    subject: `We received your message - My Beemer`,
     html: `
 <!DOCTYPE html>
 <html>
@@ -309,14 +309,14 @@ export async function sendContactAutoReply(data: ContactFormData) {
       <p style="color: #52525b; line-height: 1.6;">In the meantime, feel free to browse our latest products!</p>
 
       <div style="text-align: center; margin: 30px 0;">
-        <a href="${process.env.NEXT_PUBLIC_SITE_URL || "https://mybmza.co.za"}/supplier-products"
+        <a href="${process.env.NEXT_PUBLIC_SITE_URL || "https://mybeemer.co.za"}/supplier-products"
            style="display: inline-block; background-color: #0066B1; color: #ffffff; padding: 12px 30px; border-radius: 8px; text-decoration: none; font-weight: 500;">
           Browse Products
         </a>
       </div>
 
       <div style="text-align: center; padding-top: 20px; border-top: 1px solid #e4e4e7;">
-        <p style="color: #a1a1aa; font-size: 12px; margin: 0;">© ${new Date().getFullYear()} MyBMZA. All rights reserved.</p>
+        <p style="color: #a1a1aa; font-size: 12px; margin: 0;">© ${new Date().getFullYear()} My Beemer. All rights reserved.</p>
       </div>
     </div>
   </div>
@@ -333,9 +333,9 @@ We've received your message and will get back to you as soon as possible, typica
 Your message:
 "${data.message}"
 
-In the meantime, feel free to browse our latest products at ${process.env.NEXT_PUBLIC_SITE_URL || "https://mybmza.co.za"}/supplier-products
+In the meantime, feel free to browse our latest products at ${process.env.NEXT_PUBLIC_SITE_URL || "https://mybeemer.co.za"}/supplier-products
 
-© ${new Date().getFullYear()} MyBMZA. All rights reserved.
+© ${new Date().getFullYear()} My Beemer. All rights reserved.
     `,
   });
 
@@ -385,7 +385,7 @@ export async function sendOrderVerificationCode(
 
       <div style="text-align: center; padding-top: 30px; border-top: 1px solid #e4e4e7; margin-top: 30px;">
         <p style="color: #71717a; font-size: 14px; margin: 0;">If you didn't request this code, you can safely ignore this email.</p>
-        <p style="color: #a1a1aa; font-size: 12px; margin: 15px 0 0 0;">© ${new Date().getFullYear()} MyBMZA. All rights reserved.</p>
+        <p style="color: #a1a1aa; font-size: 12px; margin: 15px 0 0 0;">© ${new Date().getFullYear()} My Beemer. All rights reserved.</p>
       </div>
     </div>
   </div>
@@ -403,7 +403,7 @@ This code expires in 10 minutes.
 
 If you didn't request this code, you can safely ignore this email.
 
-© ${new Date().getFullYear()} MyBMZA. All rights reserved.
+© ${new Date().getFullYear()} My Beemer. All rights reserved.
     `,
   });
 

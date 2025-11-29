@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if customer exists, create if not
-    let customerId = null;
+    let customerId: string | null = null;
     const { data: existingCustomer } = await supabase
       .from("customers")
       .select("id")
@@ -46,23 +46,25 @@ export async function POST(request: NextRequest) {
     if (existingCustomer) {
       customerId = existingCustomer.id;
     } else {
+      // Try to create new customer, but don't fail order if customer creation fails
+      // (order can still be processed with just email)
       const { data: newCustomer, error: customerError } = await supabase
         .from("customers")
         .insert({
           email,
-          phone,
-          first_name: shippingAddress.firstName,
-          last_name: shippingAddress.lastName,
+          phone: phone || null,
+          first_name: shippingAddress.firstName || null,
+          last_name: shippingAddress.lastName || null,
           default_shipping_address: shippingAddress,
         })
         .select("id")
         .single();
 
-      if (customerError) {
-        console.error("Error creating customer:", customerError);
-      } else {
+      if (!customerError && newCustomer) {
         customerId = newCustomer.id;
       }
+      // Note: If customer creation fails, order proceeds without customer_id
+      // Email is still captured on the order itself for communication
     }
 
     // Create the order
@@ -88,7 +90,6 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (orderError) {
-      console.error("Error creating order:", orderError);
       return NextResponse.json(
         { error: "Failed to create order" },
         { status: 500 }
@@ -110,8 +111,7 @@ export async function POST(request: NextRequest) {
         total: order.total,
       },
     });
-  } catch (error) {
-    console.error("Order creation error:", error);
+  } catch {
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -175,8 +175,7 @@ export async function GET(request: NextRequest) {
       { error: "Email or order number required" },
       { status: 400 }
     );
-  } catch (error) {
-    console.error("Get orders error:", error);
+  } catch {
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

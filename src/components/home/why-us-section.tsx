@@ -34,7 +34,7 @@ export function WhyUsSection() {
     <section className="py-16">
       <div className="container mx-auto px-4">
         <div className="max-w-3xl mx-auto text-center mb-12">
-          <h2 className="text-2xl font-bold mb-4">Why My BM ZA?</h2>
+          <h2 className="text-2xl font-bold mb-4">Why My Beemer?</h2>
           <p className="text-muted-foreground">
             We're BMW enthusiasts based in Gauteng, curating the best
             aftermarket aesthetics for fellow enthusiasts across South Africa.

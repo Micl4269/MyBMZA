@@ -1,6 +1,6 @@
 import Script from "next/script";
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://mybmza.co.za";
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://mybeemer.co.za";
 
 interface OrganizationSchemaProps {
   name?: string;
@@ -10,9 +10,9 @@ interface OrganizationSchemaProps {
 }
 
 export function OrganizationSchema({
-  name = "My BM ZA",
+  name = "My Beemer",
   url = siteUrl,
-  logo = `${siteUrl}/logo.png`,
+  logo = `${siteUrl}/logo.svg`,
   description = "South Africa's premier destination for BMW aftermarket aesthetics. Curated plug-and-play solutions with nationwide shipping.",
 }: OrganizationSchemaProps) {
   const schema = {
@@ -49,7 +49,7 @@ interface WebSiteSchemaProps {
 }
 
 export function WebSiteSchema({
-  name = "My BM ZA",
+  name = "My Beemer",
   url = siteUrl,
 }: WebSiteSchemaProps) {
   const schema = {
@@ -114,7 +114,7 @@ export function ProductSchema({
         : "https://schema.org/OutOfStock",
       seller: {
         "@type": "Organization",
-        name: "My BM ZA",
+        name: "My Beemer",
       },
     },
   };
@@ -163,7 +163,7 @@ interface LocalBusinessSchemaProps {
 }
 
 export function LocalBusinessSchema({
-  name = "My BM ZA",
+  name = "My Beemer",
   description = "Premium BMW aftermarket aesthetics retailer in South Africa",
   url = siteUrl,
 }: LocalBusinessSchemaProps) {
@@ -173,7 +173,7 @@ export function LocalBusinessSchema({
     name,
     description,
     url,
-    image: `${siteUrl}/logo.png`,
+    image: `${siteUrl}/logo.svg`,
     priceRange: "R500 - R10000",
     address: {
       "@type": "PostalAddress",
@@ -196,6 +196,38 @@ export function LocalBusinessSchema({
   return (
     <Script
       id="local-business-schema"
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+    />
+  );
+}
+
+interface FAQItem {
+  question: string;
+  answer: string;
+}
+
+interface FAQSchemaProps {
+  faqs: FAQItem[];
+}
+
+export function FAQSchema({ faqs }: FAQSchemaProps) {
+  const schema = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: faqs.map((faq) => ({
+      "@type": "Question",
+      name: faq.question,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: faq.answer,
+      },
+    })),
+  };
+
+  return (
+    <Script
+      id="faq-schema"
       type="application/ld+json"
       dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
     />

@@ -25,7 +25,7 @@ export function CTASection() {
         </h2>
 
         <p className="text-gray-300 mb-8 max-w-xl mx-auto">
-          Join thousands of BMW enthusiasts who trust My BM ZA for premium
+          Join thousands of BMW enthusiasts who trust My Beemer for premium
           aftermarket aesthetics.
         </p>
 

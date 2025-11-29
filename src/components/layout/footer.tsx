@@ -13,8 +13,7 @@ export function Footer() {
           <div>
             <div className="flex items-center gap-1 mb-4">
               <span className="text-2xl font-bold">My</span>
-              <span className="text-2xl font-bold text-m-blue">BM</span>
-              <span className="text-2xl font-bold">ZA</span>
+              <span className="text-2xl font-bold text-m-blue">Beemer</span>
             </div>
             <p className="text-sm text-gray-400 mb-4">
               Premium BMW aftermarket aesthetics. Curated plug-and-play
@@ -22,7 +21,7 @@ export function Footer() {
             </p>
             <div className="flex items-center gap-4">
               <a
-                href="https://facebook.com/mybmza"
+                href="https://facebook.com/mybeemer"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-gray-400 hover:text-m-blue transition-colors"
@@ -30,7 +29,7 @@ export function Footer() {
                 <Facebook className="h-5 w-5" />
               </a>
               <a
-                href="https://instagram.com/mybmza"
+                href="https://instagram.com/mybeemer"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-gray-400 hover:text-m-blue transition-colors"
@@ -115,6 +114,14 @@ export function Footer() {
                   Contact Us
                 </Link>
               </li>
+              <li>
+                <Link
+                  href="/faq"
+                  className="text-gray-400 hover:text-white transition-colors"
+                >
+                  FAQ
+                </Link>
+              </li>
             </ul>
           </div>
 
@@ -138,10 +145,10 @@ export function Footer() {
               <li className="flex items-center gap-2 text-gray-400">
                 <Mail className="h-4 w-4 flex-shrink-0" />
                 <a
-                  href="mailto:info@mybmza.co.za"
+                  href="mailto:info@mybeemer.co.za"
                   className="hover:text-white transition-colors"
                 >
-                  info@mybmza.co.za
+                  info@mybeemer.co.za
                 </a>
               </li>
             </ul>
@@ -180,7 +187,7 @@ export function Footer() {
           </div>
 
           <p className="text-center text-xs text-gray-500 mt-6">
-            &copy; {new Date().getFullYear()} My BM ZA. All rights reserved. Not
+            &copy; {new Date().getFullYear()} My Beemer. All rights reserved. Not
             affiliated with BMW AG.
           </p>
         </div>

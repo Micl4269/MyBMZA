@@ -25,7 +25,9 @@ import {
   Shield,
   ArrowLeft,
   Check,
+  AlertCircle,
 } from "lucide-react";
+import { toast } from "sonner";
 
 type CheckoutStep = "information" | "shipping" | "payment";
 
@@ -178,9 +180,11 @@ export default function CheckoutPage() {
 
       // Fallback - go to success page
       router.push(`/checkout/success?order=${data.order.orderNumber}`);
-    } catch (error) {
-      console.error("Checkout error:", error);
-      alert("Failed to process checkout. Please try again.");
+    } catch {
+      toast.error("Failed to process checkout", {
+        description: "Please try again or contact support if the problem persists.",
+        icon: <AlertCircle className="h-4 w-4" />,
+      });
       setIsProcessing(false);
     }
   };
