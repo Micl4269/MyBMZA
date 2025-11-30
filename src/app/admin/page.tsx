@@ -69,7 +69,7 @@ interface Customer {
   created_at: string;
 }
 
-const ADMIN_EMAILS = ["admin@mybmza.co.za", "mic@mybmza.co.za"]; // Add your admin emails here
+const ADMIN_EMAILS = ["admin@mybeamer.co.za", "mic@mybeamer.co.za"]; // Add your admin emails here
 
 const statusConfig: Record<string, { icon: React.ReactNode; variant: "warning" | "m-blue" | "success" | "error" }> = {
   pending: { icon: <Clock className="h-3 w-3" />, variant: "warning" },

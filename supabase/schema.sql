@@ -1,4 +1,4 @@
--- My BM ZA Database Schema for Supabase
+-- My Beamer Database Schema for Supabase
 -- Run this in your Supabase SQL editor to set up the database
 
 -- Enable UUID extension
@@ -57,6 +57,7 @@ CREATE TABLE customers (
   first_name VARCHAR(100),
   last_name VARCHAR(100),
   phone VARCHAR(20),
+  default_shipping_address JSONB,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -114,8 +115,22 @@ CREATE TABLE orders (
   shipping_postal_code VARCHAR(20) NOT NULL,
   tracking_number VARCHAR(100),
   notes TEXT,
+  items JSONB,
+  shipping_address JSONB,
+  shipping_method VARCHAR(50),
+  verification_code VARCHAR(6),
+  verification_expires TIMESTAMP WITH TIME ZONE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Order status history table
+CREATE TABLE order_status_history (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  order_id UUID REFERENCES orders(id) ON DELETE CASCADE,
+  status VARCHAR(50) NOT NULL,
+  notes TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- Order items table
@@ -154,6 +169,7 @@ CREATE INDEX idx_orders_customer ON orders(customer_id);
 CREATE INDEX idx_orders_status ON orders(status);
 CREATE INDEX idx_orders_order_number ON orders(order_number);
 CREATE INDEX idx_order_items_order ON order_items(order_id);
+CREATE INDEX idx_order_status_history_order ON order_status_history(order_id);
 
 -- Function to update updated_at timestamp
 CREATE OR REPLACE FUNCTION update_updated_at_column()
