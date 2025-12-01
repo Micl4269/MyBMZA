@@ -98,26 +98,19 @@ CREATE TABLE orders (
   order_number VARCHAR(20) UNIQUE NOT NULL,
   customer_id UUID REFERENCES customers(id),
   email VARCHAR(255) NOT NULL,
-  phone VARCHAR(20) NOT NULL,
+  phone VARCHAR(20),
   status VARCHAR(50) DEFAULT 'pending',
   payment_method VARCHAR(50) NOT NULL,
   payment_status VARCHAR(50) DEFAULT 'pending',
+  payment_id VARCHAR(100),
   subtotal DECIMAL(10,2) NOT NULL,
   shipping DECIMAL(10,2) NOT NULL,
   total DECIMAL(10,2) NOT NULL,
-  shipping_first_name VARCHAR(100) NOT NULL,
-  shipping_last_name VARCHAR(100) NOT NULL,
-  shipping_company VARCHAR(255),
-  shipping_address1 VARCHAR(255) NOT NULL,
-  shipping_address2 VARCHAR(255),
-  shipping_city VARCHAR(100) NOT NULL,
-  shipping_province VARCHAR(50) NOT NULL,
-  shipping_postal_code VARCHAR(20) NOT NULL,
+  items JSONB NOT NULL,
+  shipping_address JSONB NOT NULL,
+  shipping_method VARCHAR(50) DEFAULT 'standard',
   tracking_number VARCHAR(100),
   notes TEXT,
-  items JSONB,
-  shipping_address JSONB,
-  shipping_method VARCHAR(50),
   verification_code VARCHAR(6),
   verification_expires TIMESTAMP WITH TIME ZONE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -147,6 +140,31 @@ CREATE TABLE order_items (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Supplier products table (scraped inventory)
+CREATE TABLE supplier_products (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  source VARCHAR(50) NOT NULL,
+  source_id VARCHAR(100),
+  source_url TEXT,
+  name VARCHAR(500) NOT NULL,
+  description TEXT,
+  short_description TEXT,
+  price DECIMAL(10,2) NOT NULL,
+  regular_price DECIMAL(10,2),
+  in_stock BOOLEAN DEFAULT true,
+  stock_status VARCHAR(50),
+  stock_quantity INTEGER,
+  primary_category VARCHAR(255),
+  categories TEXT[],
+  images TEXT[],
+  hosted_images TEXT[],
+  compatibility_text TEXT,
+  compatibility_models TEXT[],
+  scraped_at TIMESTAMP WITH TIME ZONE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 -- Admin users table
 CREATE TABLE admin_users (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -170,6 +188,10 @@ CREATE INDEX idx_orders_status ON orders(status);
 CREATE INDEX idx_orders_order_number ON orders(order_number);
 CREATE INDEX idx_order_items_order ON order_items(order_id);
 CREATE INDEX idx_order_status_history_order ON order_status_history(order_id);
+CREATE INDEX idx_supplier_products_source ON supplier_products(source);
+CREATE INDEX idx_supplier_products_in_stock ON supplier_products(in_stock);
+CREATE INDEX idx_supplier_products_category ON supplier_products(primary_category);
+CREATE INDEX idx_customers_email ON customers(email);
 
 -- Function to update updated_at timestamp
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -196,6 +218,11 @@ CREATE TRIGGER update_orders_updated_at
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
 
+CREATE TRIGGER update_supplier_products_updated_at
+  BEFORE UPDATE ON supplier_products
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+
 -- Function to generate order number
 CREATE OR REPLACE FUNCTION generate_order_number()
 RETURNS TRIGGER AS $$
@@ -219,13 +246,19 @@ CREATE TRIGGER set_order_number
 ALTER TABLE products ENABLE ROW LEVEL SECURITY;
 ALTER TABLE product_images ENABLE ROW LEVEL SECURITY;
 ALTER TABLE product_fitment ENABLE ROW LEVEL SECURITY;
+ALTER TABLE supplier_products ENABLE ROW LEVEL SECURITY;
 ALTER TABLE customers ENABLE ROW LEVEL SECURITY;
 ALTER TABLE customer_addresses ENABLE ROW LEVEL SECURITY;
 ALTER TABLE customer_vehicles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE order_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE order_status_history ENABLE ROW LEVEL SECURITY;
 
--- Public read access for products
+-- =====================
+-- PUBLIC READ POLICIES
+-- =====================
+
+-- Products viewable by everyone
 CREATE POLICY "Products are viewable by everyone" ON products
   FOR SELECT USING (true);
 
@@ -235,22 +268,59 @@ CREATE POLICY "Product images are viewable by everyone" ON product_images
 CREATE POLICY "Product fitment is viewable by everyone" ON product_fitment
   FOR SELECT USING (true);
 
--- Customers can only see their own data
-CREATE POLICY "Customers can view own data" ON customers
-  FOR SELECT USING (auth.uid()::text = id::text);
+-- Supplier products viewable by everyone
+CREATE POLICY "Supplier products are viewable by everyone" ON supplier_products
+  FOR SELECT USING (true);
 
-CREATE POLICY "Customers can update own data" ON customers
-  FOR UPDATE USING (auth.uid()::text = id::text);
+-- =====================
+-- GUEST CHECKOUT POLICIES (using anon key)
+-- These allow the checkout API to work without authentication
+-- =====================
 
+-- Allow creating customers (for guest checkout)
+CREATE POLICY "Allow insert customers" ON customers
+  FOR INSERT WITH CHECK (true);
+
+-- Allow selecting customers by email (for checkout flow)
+CREATE POLICY "Allow select customers by email" ON customers
+  FOR SELECT USING (true);
+
+-- Allow updating customers (for checkout flow to update shipping address)
+CREATE POLICY "Allow update customers" ON customers
+  FOR UPDATE USING (true);
+
+-- Allow creating orders (guest checkout)
+CREATE POLICY "Allow insert orders" ON orders
+  FOR INSERT WITH CHECK (true);
+
+-- Allow selecting orders by order_number (for success page, tracking)
+CREATE POLICY "Allow select orders" ON orders
+  FOR SELECT USING (true);
+
+-- Allow updating orders (for payment webhooks to update status)
+CREATE POLICY "Allow update orders" ON orders
+  FOR UPDATE USING (true);
+
+-- Allow creating order status history
+CREATE POLICY "Allow insert order_status_history" ON order_status_history
+  FOR INSERT WITH CHECK (true);
+
+-- Allow selecting order status history
+CREATE POLICY "Allow select order_status_history" ON order_status_history
+  FOR SELECT USING (true);
+
+-- =====================
+-- AUTHENTICATED USER POLICIES
+-- =====================
+
+-- Customer addresses belong to customer
 CREATE POLICY "Customer addresses belong to customer" ON customer_addresses
   FOR ALL USING (customer_id IN (SELECT id FROM customers WHERE auth.uid()::text = id::text));
 
+-- Customer vehicles belong to customer
 CREATE POLICY "Customer vehicles belong to customer" ON customer_vehicles
   FOR ALL USING (customer_id IN (SELECT id FROM customers WHERE auth.uid()::text = id::text));
 
--- Orders policies
-CREATE POLICY "Customers can view own orders" ON orders
-  FOR SELECT USING (customer_id IN (SELECT id FROM customers WHERE auth.uid()::text = id::text));
-
-CREATE POLICY "Order items belong to order" ON order_items
-  FOR SELECT USING (order_id IN (SELECT id FROM orders WHERE customer_id IN (SELECT id FROM customers WHERE auth.uid()::text = id::text)));
+-- Order items (read-only access)
+CREATE POLICY "Order items are viewable" ON order_items
+  FOR SELECT USING (true);

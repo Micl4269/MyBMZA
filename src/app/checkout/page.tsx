@@ -215,8 +215,7 @@ export default function CheckoutPage() {
         <div className="flex items-center justify-between mb-8">
           <Link href="/" className="flex items-center gap-1">
             <span className="text-2xl font-bold">My</span>
-            <span className="text-2xl font-bold text-m-blue">BM</span>
-            <span className="text-2xl font-bold">ZA</span>
+            <span className="text-2xl font-bold text-m-blue">Beamer</span>
           </Link>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Shield className="h-4 w-4" />
